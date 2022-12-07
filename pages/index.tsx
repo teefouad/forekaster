@@ -1,5 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
+import CityPicker from '../components/CityPicker';
 import WorldMap from '../components/WorldMap';
 
 const Home: NextPage = () => {
@@ -33,7 +34,7 @@ const Home: NextPage = () => {
           },
           {
             id: '4',
-            label: 'Sweden',
+            label: 'Clear : 5℃',
             lat: 64.463597,
             lon: 16.786608,
           },
@@ -51,6 +52,8 @@ const Home: NextPage = () => {
           },
         ]}
       />
+
+      <CityPicker />
     </div>
   );
 }
