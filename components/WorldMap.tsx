@@ -10,6 +10,7 @@ import * as Three from 'three';
  */
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
+import CloudTooltip from './CloudTooltip';
 
 /**
  * Root
@@ -364,11 +365,9 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       {
         markers.map((marker) => (
           <button key={marker.id} className="map-marker" data-id={marker.id}>
-            <span className="map-marker__pin" />
-
-            <span className="map-marker__label">
-              {marker.label}
-            </span>
+            <CloudTooltip label={marker.label} offset={48}>
+              <span className="map-marker__pin" />
+            </CloudTooltip>
           </button>
         ))
       }
