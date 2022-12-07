@@ -50,19 +50,19 @@ const Root = styled.div`
 
   .map-marker__label {
     position: absolute;
-    bottom: ${toRem(50)};
+    bottom: ${toRem(45)};
     left: 50%;
-    padding: ${toRem(6)} ${toRem(18)};
+    padding: ${toRem(3)} ${toRem(5)};
     font-family: Nunito, sans-serif;
     font-size: ${toRem(12)};
     font-weight: 600;
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;
-    border-radius: 50%;
+    border-radius: ${toRem(4)};
     color: #000;
     background: #fff;
-    transform: translate(-50%, 20%) scale(0.9, 0.9);
+    transform: translate(-50%, 30%);
     transform-origin: center bottom;
     transition: opacity 150ms ${easing.easyBack}, transform 150ms ${easing.easyBack};
 
@@ -103,7 +103,7 @@ const Root = styled.div`
 
     .map-marker__label {
       opacity: 1;
-      transform: translate(-50%, 0) scale(1);
+      transform: translate(-50%, 0);
       transition-timing-function: ${easing.easyBack};
     }
   }
@@ -379,7 +379,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
             <span className="map-marker__label">
               {marker.label}
 
-              {
+              {/* {
                 Array.from({ length: Math.max(18, 1.5 * marker.label.length) }).map((char, n) => {
                   const angle = 2 * n * Math.PI / (Math.max(18, 1.5 * marker.label.length));
                   const minSize = 6;
@@ -402,7 +402,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
                     />
                   );
                 })
-              }
+              } */}
             </span>
           </button>
         ))
