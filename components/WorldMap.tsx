@@ -9,6 +9,7 @@ import * as Three from 'three';
  * Local imports
  */
 import { toRem } from '../utils/text';
+import * as easing from '../utils/easing';
 
 /**
  * Root
@@ -24,27 +25,87 @@ const Root = styled.div`
     position: absolute;
     top: 0;
     left: 0;
-    opacity: 0;
+    padding: 0;
     cursor: pointer;
     outline: none;
     border: none;
     background: transparent;
-
-    &[data-active="1"] {
-      opacity: 1;
-    }
   }
-
+  
   .map-marker__pin {
     display: block;
-    width: ${toRem(20)};
-    height: ${toRem(20)};
-    background-color: #000;
-    border-radius: 50%;
+    width: ${toRem(21)};
+    height: ${toRem(28)};
+    margin-left: ${toRem(-12)};
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    background: url(/marker.png) no-repeat 50%;
+    background-size: contain;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center bottom;
+    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
   }
 
   .map-marker__label {
-    display: none;
+    position: absolute;
+    bottom: ${toRem(50)};
+    left: 50%;
+    padding: ${toRem(6)} ${toRem(18)};
+    font-family: Nunito, sans-serif;
+    font-size: ${toRem(12)};
+    font-weight: 600;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    border-radius: 50%;
+    color: #000;
+    background: #fff;
+    transform: translate(-50%, 20%) scale(0.9, 0.9);
+    transform-origin: center bottom;
+    transition: opacity 150ms ${easing.easyBack}, transform 150ms ${easing.easyBack};
+
+    > i {
+      display: block;
+      position: absolute;
+      z-index: -1;
+      background-color: #fff;
+      border-radius: 50%;
+      animation: 1000ms map-marker-label-cloud-1 both infinite linear;
+
+      @keyframes map-marker-label-cloud-1 {
+        from { transform: rotate(0deg) scaleX(1.1) scaleY(0.9); }
+        to { transform: rotate(360deg) scaleX(1.1) scaleY(0.9); }
+      }
+    }
+  }
+
+  /* Active */
+  
+  .map-marker[data-active="1"] {
+    .map-marker__pin {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+  }
+
+  /* Hover */
+
+  .map-marker:hover {
+    z-index: 9999999 !important;
+
+    .map-marker__pin {
+      opacity: 1;
+      transform: scale(1.35);
+      transition-timing-function: ${easing.easyBack};
+    }
+
+    .map-marker__label {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+      transition-timing-function: ${easing.easyBack};
+    }
   }
 `;
 
@@ -87,8 +148,8 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
     // Create globe
     const globeGeometry = new Three.SphereGeometry(10, 100, 100);
-    const globeTexture = new Three.TextureLoader().load('/world-map.jpg');
-    const globeMaterial = new Three.MeshBasicMaterial({ map: globeTexture });
+    const globeTexture = new Three.TextureLoader().load('/world-map.png');
+    const globeMaterial = new Three.MeshBasicMaterial({ map: globeTexture, transparent: true });
     const globe = new Three.Mesh(globeGeometry, globeMaterial);
 
     // Helpers
@@ -114,6 +175,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
 
     // Setup
+    const autoOrbit = false;
     const maxOrbitSpeed = degToRad(0.025);
     const orbitAcceleration = degToRad(0.00005);
 
@@ -158,6 +220,10 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
       data.x0 = e.pageX;
       data.y0 = e.pageY;
+      data.x1 = e.pageX;
+      data.y1 = e.pageY;
+      data.dx = 0;
+      data.dy = 0;
       data.rx0 = globe.rotation.x;
       data.ry0 = globe.rotation.y;
 
@@ -184,9 +250,13 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       isDragging = false;
       window.removeEventListener('mousemove', dragging);
 
-      orbitingTimeout = setTimeout(() => {
-        orbiting = true;
-      }, 15000);
+      console.log(data.dx, data.dy)
+
+      if (autoOrbit) {
+        orbitingTimeout = setTimeout(() => {
+          orbiting = true;
+        }, 15000);
+      }
     };
 
     root.addEventListener('mousedown', startDrag);
@@ -261,7 +331,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     // Update animation
     let frame = raf(function render() {
       if (!isDragging) {
-        if (orbiting) {
+        if (autoOrbit && orbiting) {
           if (Math.abs(data.dx) < 0.1) {
             orbitSpeed = Math.min(maxOrbitSpeed, orbitSpeed + orbitAcceleration);
             globe.rotation.y += orbitSpeed;
@@ -305,8 +375,34 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
         markers.map((marker) => (
           <button key={marker.id} className="map-marker" data-id={marker.id}>
             <span className="map-marker__pin" />
+
             <span className="map-marker__label">
               {marker.label}
+
+              {
+                Array.from({ length: Math.max(18, 1.5 * marker.label.length) }).map((char, n) => {
+                  const angle = 2 * n * Math.PI / (Math.max(18, 1.5 * marker.label.length));
+                  const minSize = 6;
+                  const baseSize = 20;
+                  const randomizeSizeBy = 8;
+                  const size = Math.max(minSize, Math.abs(((baseSize - 0.5 * randomizeSizeBy) + Math.random() * randomizeSizeBy) * Math.cos(angle)));
+
+                  return (
+                    <i
+                      key={n}
+                      style={{
+                        width: toRem(size),
+                        height: toRem(size),
+                        margin: `${toRem(-0.5 * size)} 0 0 ${toRem(-0.5 * size)}`,
+                        left: `calc(50% + ${Math.sin(angle)} * 50% + ${Math.floor(Math.random() * 6 - 3)}%)`,
+                        top: `calc(50% + ${Math.cos(angle)} * 30% + ${Math.floor(Math.random() * 6 - 3)}%)`,
+                        animationDuration: `${Math.floor(2500 + Math.random() * 1000)}ms`,
+                        animationDirection: `${Math.random() > 0.5 ? 'reverse' : 'normal'}`
+                      }}
+                    />
+                  );
+                })
+              }
             </span>
           </button>
         ))

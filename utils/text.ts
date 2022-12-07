@@ -1,4 +1,4 @@
-export const baseFontSize = 14;
+export const baseFontSize = 16;
 
 /**
  * Converts a measurement value from pixels to rem
