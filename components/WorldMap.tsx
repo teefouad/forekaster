@@ -54,8 +54,10 @@ const Root = styled.div`
     left: 50%;
     padding: ${toRem(6)} ${toRem(18)};
     font-family: Nunito, sans-serif;
-    font-size: ${toRem(12)};
-    font-weight: 600;
+    font-size: ${toRem(11)};
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;
