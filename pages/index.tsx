@@ -1,6 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import Map from '../components/WorldMap';
+import WorldMap from '../components/WorldMap';
 
 const Home: NextPage = () => {
   return (
@@ -11,7 +11,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Map
+      <WorldMap
         markers={[
           {
             id: '1',

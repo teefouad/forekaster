@@ -50,21 +50,25 @@ const Root = styled.div`
 
   .map-marker__label {
     position: absolute;
-    bottom: ${toRem(45)};
+    bottom: ${toRem(50)};
     left: 50%;
-    padding: ${toRem(3)} ${toRem(5)};
+    padding: ${toRem(6)} ${toRem(18)};
     font-family: Nunito, sans-serif;
     font-size: ${toRem(12)};
     font-weight: 600;
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;
-    border-radius: ${toRem(4)};
-    color: #000;
-    background: #fff;
-    transform: translate(-50%, 30%);
+    border-radius: 50%;
+    color: transparent;
+    background: transparent;
+    transform: translate(-50%, 20%) scale(0.2, 0.9);
     transform-origin: center bottom;
-    transition: opacity 150ms ${easing.easyBack}, transform 150ms ${easing.easyBack};
+    transition:
+      color 600ms ${easing.softOut} 200ms,
+      background-color 250ms ${easing.softOut} 250ms,
+      opacity 150ms ${easing.easyBack},
+      transform 250ms ${easing.easyBack};
 
     > i {
       display: block;
@@ -73,6 +77,7 @@ const Root = styled.div`
       background-color: #fff;
       border-radius: 50%;
       animation: 1000ms map-marker-label-cloud-1 both infinite linear;
+      transition: 150ms top ${easing.easyBack} 100ms, 150ms left ${easing.easyBack2} 100ms;
 
       @keyframes map-marker-label-cloud-1 {
         from { transform: rotate(0deg) scaleX(1.1) scaleY(0.9); }
@@ -103,8 +108,18 @@ const Root = styled.div`
 
     .map-marker__label {
       opacity: 1;
-      transform: translate(-50%, 0);
-      transition-timing-function: ${easing.easyBack};
+      color: #000;
+      background: #fff;
+      transform: translate(-50%, 0) scale(1);
+    }
+  }
+
+  .map-marker:not(:hover) {
+    .map-marker__label {
+      > i {
+        top: 50% !important;
+        left: 50% !important;
+      }
     }
   }
 `;
@@ -379,7 +394,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
             <span className="map-marker__label">
               {marker.label}
 
-              {/* {
+              {
                 Array.from({ length: Math.max(18, 1.5 * marker.label.length) }).map((char, n) => {
                   const angle = 2 * n * Math.PI / (Math.max(18, 1.5 * marker.label.length));
                   const minSize = 6;
@@ -396,13 +411,15 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
                         margin: `${toRem(-0.5 * size)} 0 0 ${toRem(-0.5 * size)}`,
                         left: `calc(50% + ${Math.sin(angle)} * 50% + ${Math.floor(Math.random() * 6 - 3)}%)`,
                         top: `calc(50% + ${Math.cos(angle)} * 30% + ${Math.floor(Math.random() * 6 - 3)}%)`,
+                        transitionDuration: `${Math.floor(150 + Math.random() * 200)}ms, ${Math.floor(250 * Math.sin(angle) + Math.random() * 200)}ms`,
+                        transitionDelay: `${Math.floor(50 + Math.random() * 50)}ms, ${Math.floor(80 + Math.random() * 50)}ms`,
                         animationDuration: `${Math.floor(2500 + Math.random() * 1000)}ms`,
                         animationDirection: `${Math.random() > 0.5 ? 'reverse' : 'normal'}`
                       }}
                     />
                   );
                 })
-              } */}
+              }
             </span>
           </button>
         ))
