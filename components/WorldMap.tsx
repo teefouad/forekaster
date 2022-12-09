@@ -16,10 +16,15 @@ import CloudTooltip from './CloudTooltip';
  * Root
  */
 const Root = styled.div`
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 85vw;
+  height: 85vw;
+  margin-left: ${toRem(300)};
+  transform: translate(-50%, -50%);
   
   canvas {
-    display: block;
     width: 100%;
     height: 100%;
   }
@@ -37,9 +42,9 @@ const Root = styled.div`
   
   .map-marker__pin {
     display: block;
-    width: ${toRem(21)};
-    height: ${toRem(28)};
-    margin-left: ${toRem(-12)};
+    width: ${toRem(22)};
+    height: ${toRem(22 * 1.33)};
+    margin-left: ${toRem(-22 * 0.5)};
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -98,6 +103,55 @@ const Root = styled.div`
       transform: translate(-50%, 0);
     }
   }
+
+  /* Responsive */
+  @media (width > ${toRem(1800)}) {
+    width: ${toRem(1700)};
+    height: ${toRem(1700)};
+    margin-left: ${toRem(400)};
+
+    .map-marker__pin {
+      width: ${toRem(28)};
+      height: ${toRem(28 * 1.33)};
+      margin-left: ${toRem(-28 * 0.5)};
+    }
+  }
+
+  @media (width > ${toRem(2400)}) {
+    width: ${toRem(2300)};
+    height: ${toRem(2300)};
+    margin-left: ${toRem(500)};
+
+    .map-marker__pin {
+      width: ${toRem(38)};
+      height: ${toRem(38 * 1.33)};
+      margin-left: ${toRem(-38 * 0.5)};
+    }
+  }
+
+  @media (width > ${toRem(3200)}) {
+    width: ${toRem(3100)};
+    height: ${toRem(3100)};
+    margin-left: ${toRem(600)};
+
+    .map-marker__pin {
+      width: ${toRem(48)};
+      height: ${toRem(48 * 1.33)};
+      margin-left: ${toRem(-48 * 0.5)};
+    }
+  }
+
+  @media (width > ${toRem(4000)}) {
+    width: ${toRem(3900)};
+    height: ${toRem(3900)};
+    margin-left: ${toRem(700)};
+
+    .map-marker__pin {
+      width: ${toRem(74)};
+      height: ${toRem(74 * 1.33)};
+      margin-left: ${toRem(-74 * 0.5)};
+    }
+  }
 `;
 
 /**
@@ -112,6 +166,8 @@ export interface Marker {
 
 export interface WorldMapProps {
   markers: Marker[],
+  target?: { lat: number, lon: number },
+  zoom?: number,
 }
 
 export type WorldMapCombinedProps = WorldMapProps & JSX.IntrinsicElements['div'];
@@ -164,7 +220,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       return { x, y, z, worldPosition: position };
     };
 
-
     // Setup
     const autoOrbit = false;
     const maxOrbitSpeed = degToRad(0.025);
@@ -179,8 +234,8 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
     globeTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-    camera.position.x = -5;
-    camera.position.z = 40;
+    camera.position.x = 0;
+    camera.position.z = 60;
 
     scene.add(globe);
 
@@ -202,31 +257,36 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       py: 0,
     };
 
-    const startDrag = (e: MouseEvent) => {
+    const startDrag = (e: MouseEvent | TouchEvent) => {
       isDragging = true;
       orbiting = false;
       orbitSpeed = 0;
 
       clearTimeout(orbitingTimeout);
 
-      data.x0 = e.pageX;
-      data.y0 = e.pageY;
-      data.x1 = e.pageX;
-      data.y1 = e.pageY;
+      const event = (e as TouchEvent).touches?.[0] ?? e;
+
+      data.x0 = event.pageX;
+      data.y0 = event.pageY;
+      data.x1 = event.pageX;
+      data.y1 = event.pageY;
       data.dx = 0;
       data.dy = 0;
       data.rx0 = globe.rotation.x;
       data.ry0 = globe.rotation.y;
 
       window.addEventListener('mousemove', dragging);
+      window.addEventListener('touchmove', dragging);
     };
-
-    const dragging = (e: MouseEvent) => {
+    
+    const dragging = (e: MouseEvent | TouchEvent) => {
       data.px = data.x1;
       data.py = data.y1;
 
-      data.x1 = e.pageX;
-      data.y1 = e.pageY;
+      const event = (e as TouchEvent).touches?.[0] ?? e;
+
+      data.x1 = event.pageX;
+      data.y1 = event.pageY;
 
       data.dx = data.x1 - data.px;
       data.dy = data.y1 - data.py;
@@ -237,11 +297,10 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       globe.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, globe.rotation.x));
     };
 
-    const stopDrag = (e: MouseEvent) => {
+    const stopDrag = () => {
       isDragging = false;
       window.removeEventListener('mousemove', dragging);
-
-      console.log(data.dx, data.dy)
+      window.removeEventListener('touchmove', dragging);
 
       if (autoOrbit) {
         orbitingTimeout = setTimeout(() => {
@@ -251,14 +310,18 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     };
 
     root.addEventListener('mousedown', startDrag);
+    root.addEventListener('touchstart', startDrag);
     window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchend', stopDrag);
 
     // Resize canvas
     const resizeCanvas = () => {
-      const pixelRatio = window.devicePixelRatio;
-      const width  = window.innerWidth * pixelRatio;
+      const pixelRatio = 2 * window.devicePixelRatio;
+      const width  = window.innerHeight * pixelRatio;
       const height = window.innerHeight * pixelRatio;
 
+      // camera.position.z = Math.min(40, Math.max(18, window.innerHeight / 20));
+      
       renderer.setSize(width, height, false);
       
       camera.aspect = width / height;
@@ -311,8 +374,8 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
         const isActive = (
           markerProjectedPosition.worldPosition.z > 0
-          && d < window.innerHeight * (dx > 0 ? 0.45 : 0.64)
-          && Math.abs(dy) < window.innerHeight * 0.4
+          && d < canvas.clientHeight * (dx > 0 ? 0.45 : 0.64)
+          && Math.abs(dy) < canvas.clientHeight * 0.4
         );
 
         markerElement.setAttribute('data-active', isActive ? '1' : '0');
@@ -352,8 +415,11 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     return () => {
       caf(frame);
       root.removeEventListener('mousedown', startDrag);
+      root.removeEventListener('touchstart', startDrag);
       window.removeEventListener('mouseup', stopDrag);
+      window.removeEventListener('toucend', stopDrag);
       window.removeEventListener('mousemove', dragging);
+      window.removeEventListener('touchmove', dragging);
       window.removeEventListener('resize', resizeCanvas);
     };
   }, [markers]);

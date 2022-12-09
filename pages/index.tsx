@@ -1,11 +1,43 @@
+/**
+ * Dependency imports
+ */
+import React from 'react';
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
+
+/**
+ * Local imports
+ */
 import CityPicker from '../components/CityPicker';
 import WorldMap from '../components/WorldMap';
+import { toRem } from '../utils/text';
 
-const Home: NextPage = () => {
+/**
+ * Root
+ */
+const Root = styled('div', {
+  shouldForwardProp: (prop: PropertyKey) => !([]).includes(prop.toString()),
+})((props) => css`
+  #world-map {
+    /* position: relative; */
+    /* margin-left: ${toRem(300)}; */
+    /* left: 50%;
+    transform: translate(calc(-50% + ${toRem(300)}), 0); */
+  }
+
+  #city-picker {
+    /* transform: translateX(${toRem(300)}); */
+  }
+`);
+
+/**
+ * Homepage Component
+ */
+const Homepage: NextPage = (props) => {
   return (
-    <div>
+    <Root {...props}>
       <Head>
         <title>Forekaster | A neat way to learn about the current weather and forecast</title>
         <meta name="description" content="A neat way to learn about the current weather and forecast" />
@@ -13,6 +45,7 @@ const Home: NextPage = () => {
       </Head>
 
       <WorldMap
+        id="world-map"
         markers={[
           {
             id: '1',
@@ -53,9 +86,9 @@ const Home: NextPage = () => {
         ]}
       />
 
-      <CityPicker />
-    </div>
+      {/* <CityPicker id="city-picker" /> */}
+    </Root>
   );
-}
+};
 
-export default Home
+export default Homepage;
