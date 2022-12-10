@@ -8,9 +8,70 @@ import * as Three from 'three';
 /**
  * Local imports
  */
+import CloudTooltip from './CloudTooltip';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
-import CloudTooltip from './CloudTooltip';
+
+/**
+ * Threejs Setup
+ */
+const degToRad = (deg: number) => deg * Math.PI / 180;
+
+const getProjectedPosition = (obj3d: Three.Object3D, camera: Three.Camera, canvas: HTMLCanvasElement) => {
+  const position = new Three.Vector3();
+    
+  obj3d.updateWorldMatrix(true, true);
+  obj3d.getWorldPosition(position);
+
+  const projectedPosition = new Three.Vector3();
+
+  projectedPosition.copy(position);
+  projectedPosition.project(camera);
+
+  const x = (projectedPosition.x * 0.5 + 0.5) * canvas.clientWidth;
+  const y = (projectedPosition.y * -0.5 + 0.5) * canvas.clientHeight;
+  const z = position.z ?? 0;
+
+  return { x, y, z, worldPosition: position };
+};
+
+let existing3DWorld: any;
+
+const setup3DWorld = (canvas: HTMLCanvasElement) => {
+  if (existing3DWorld) return existing3DWorld;
+
+  const fieldOfView = 20;
+  const aspectRatio = 2; // default aspect ratio for canvas
+
+  const scene = new Three.Scene();
+  const camera = new Three.PerspectiveCamera(fieldOfView, aspectRatio, 0.1, 1000);
+  const renderer = new Three.WebGLRenderer({ canvas, alpha: true, antialias: true });
+
+  // Create globe
+  const globeGeometry = new Three.SphereGeometry(10, 100, 100);
+  const globeTexture = new Three.TextureLoader().load('/world-map.png');
+  const globeMaterial = new Three.MeshBasicMaterial({ map: globeTexture, transparent: true });
+  const globe = new Three.Mesh(globeGeometry, globeMaterial);
+
+  globeTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  
+  globe.rotation.x = degToRad(30);
+  globe.rotation.y = degToRad(-100);
+
+  camera.position.x = 0;
+  camera.position.z = 60;
+
+  scene.add(globe);
+
+  existing3DWorld = {
+    scene,
+    camera,
+    renderer,
+    globe,
+  };
+
+  return existing3DWorld;
+};
 
 /**
  * Root
@@ -103,55 +164,6 @@ const Root = styled.div`
       transform: translate(-50%, 0);
     }
   }
-
-  /* Responsive */
-  @media (width > ${toRem(1800)}) {
-    width: ${toRem(1700)};
-    height: ${toRem(1700)};
-    margin-left: ${toRem(400)};
-
-    .map-marker__pin {
-      width: ${toRem(28)};
-      height: ${toRem(28 * 1.33)};
-      margin-left: ${toRem(-28 * 0.5)};
-    }
-  }
-
-  @media (width > ${toRem(2400)}) {
-    width: ${toRem(2300)};
-    height: ${toRem(2300)};
-    margin-left: ${toRem(500)};
-
-    .map-marker__pin {
-      width: ${toRem(38)};
-      height: ${toRem(38 * 1.33)};
-      margin-left: ${toRem(-38 * 0.5)};
-    }
-  }
-
-  @media (width > ${toRem(3200)}) {
-    width: ${toRem(3100)};
-    height: ${toRem(3100)};
-    margin-left: ${toRem(600)};
-
-    .map-marker__pin {
-      width: ${toRem(48)};
-      height: ${toRem(48 * 1.33)};
-      margin-left: ${toRem(-48 * 0.5)};
-    }
-  }
-
-  @media (width > ${toRem(4000)}) {
-    width: ${toRem(3900)};
-    height: ${toRem(3900)};
-    margin-left: ${toRem(700)};
-
-    .map-marker__pin {
-      width: ${toRem(74)};
-      height: ${toRem(74 * 1.33)};
-      margin-left: ${toRem(-74 * 0.5)};
-    }
-  }
 `;
 
 /**
@@ -166,6 +178,7 @@ export interface Marker {
 
 export interface WorldMapProps {
   markers: Marker[],
+  autoOrbit?: boolean,
   target?: { lat: number, lon: number },
   zoom?: number,
 }
@@ -173,6 +186,7 @@ export interface WorldMapProps {
 export type WorldMapCombinedProps = WorldMapProps & JSX.IntrinsicElements['div'];
 
 const WorldMap: React.FC<WorldMapCombinedProps> = ({
+  autoOrbit = true,
   markers,
   ...props
 }) => {
@@ -186,42 +200,14 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     const root = rootRef.current! as HTMLDivElement;
     const canvas = canvasRef.current! as HTMLCanvasElement;
 
-    const fieldOfView = 20;
-    const aspectRatio = 2; // default aspect ratio for canvas
+    const {
+      scene,
+      camera,
+      renderer,
+      globe,
+    } = setup3DWorld(canvas);
 
-    const scene = new Three.Scene();
-    const camera = new Three.PerspectiveCamera(fieldOfView, aspectRatio, 0.1, 1000);
-    const renderer = new Three.WebGLRenderer({ canvas, alpha: true, antialias: true });
-
-    // Create globe
-    const globeGeometry = new Three.SphereGeometry(10, 100, 100);
-    const globeTexture = new Three.TextureLoader().load('/world-map.png');
-    const globeMaterial = new Three.MeshBasicMaterial({ map: globeTexture, transparent: true });
-    const globe = new Three.Mesh(globeGeometry, globeMaterial);
-
-    // Helpers
-    const degToRad = (deg: number) => deg * Math.PI / 180;
-
-    const getProjectedPosition = (obj3d: Three.Object3D) => {
-      const position = new Three.Vector3();
-        
-      obj3d.updateWorldMatrix(true, true);
-      obj3d.getWorldPosition(position);
-
-      const projectedPosition = new Three.Vector3();
-
-      projectedPosition.copy(position);
-      projectedPosition.project(camera);
-
-      const x = (projectedPosition.x * 0.5 + 0.5) * canvas.clientWidth;
-      const y = (projectedPosition.y * -0.5 + 0.5) * canvas.clientHeight;
-      const z = position.z ?? 0;
-
-      return { x, y, z, worldPosition: position };
-    };
-
-    // Setup
-    const autoOrbit = false;
+    // Auto-orbit
     const maxOrbitSpeed = degToRad(0.025);
     const orbitAcceleration = degToRad(0.00005);
 
@@ -229,22 +215,12 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     let orbiting = true;
     let orbitingTimeout: any = null;
 
-    globe.rotation.x = degToRad(30);
-    globe.rotation.y = degToRad(-100);
-
-    globeTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-    camera.position.x = 0;
-    camera.position.z = 60;
-
-    scene.add(globe);
-
     // Mouse interactivity
     let isDragging = false;
 
     const draggingFactor = 0.001;
 
-    const data = {
+    const dragData = {
       x0: 0,
       y0: 0,
       x1: 0,
@@ -266,33 +242,33 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
       const event = (e as TouchEvent).touches?.[0] ?? e;
 
-      data.x0 = event.pageX;
-      data.y0 = event.pageY;
-      data.x1 = event.pageX;
-      data.y1 = event.pageY;
-      data.dx = 0;
-      data.dy = 0;
-      data.rx0 = globe.rotation.x;
-      data.ry0 = globe.rotation.y;
+      dragData.x0 = event.pageX;
+      dragData.y0 = event.pageY;
+      dragData.x1 = event.pageX;
+      dragData.y1 = event.pageY;
+      dragData.dx = 0;
+      dragData.dy = 0;
+      dragData.rx0 = globe.rotation.x;
+      dragData.ry0 = globe.rotation.y;
 
       window.addEventListener('mousemove', dragging);
       window.addEventListener('touchmove', dragging);
     };
     
     const dragging = (e: MouseEvent | TouchEvent) => {
-      data.px = data.x1;
-      data.py = data.y1;
+      dragData.px = dragData.x1;
+      dragData.py = dragData.y1;
 
       const event = (e as TouchEvent).touches?.[0] ?? e;
 
-      data.x1 = event.pageX;
-      data.y1 = event.pageY;
+      dragData.x1 = event.pageX;
+      dragData.y1 = event.pageY;
 
-      data.dx = data.x1 - data.px;
-      data.dy = data.y1 - data.py;
+      dragData.dx = dragData.x1 - dragData.px;
+      dragData.dy = dragData.y1 - dragData.py;
 
-      globe.rotation.x = data.rx0 + draggingFactor * (data.y1 - data.y0);
-      globe.rotation.y = data.ry0 + draggingFactor * (data.x1 - data.x0);
+      globe.rotation.x = dragData.rx0 + draggingFactor * (dragData.y1 - dragData.y0);
+      globe.rotation.y = dragData.ry0 + draggingFactor * (dragData.x1 - dragData.x0);
 
       globe.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, globe.rotation.x));
     };
@@ -320,8 +296,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       const width  = window.innerHeight * pixelRatio;
       const height = window.innerHeight * pixelRatio;
 
-      // camera.position.z = Math.min(40, Math.max(18, window.innerHeight / 20));
-      
       renderer.setSize(width, height, false);
       
       camera.aspect = width / height;
@@ -349,7 +323,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       latHelper.rotation.x = degToRad(-marker.lat - 1.35);
       lonHelper.rotation.y = degToRad(marker.lon + 90 + 0.3);
 
-      const markerElement: HTMLElement = root.querySelector(`.map-marker[data-id='${marker.id}']`)!;
+      const markerElement: HTMLElement = root.querySelector(`.map-marker[dragData-id='${marker.id}']`)!;
 
       if (markerElement) {
         mapMarkers.set(markerElement, positionHelper);
@@ -358,7 +332,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
     const updateMarkers = () => {
       mapMarkers.forEach((markerPositionHelper, markerElement) => {
-        const markerProjectedPosition = getProjectedPosition(markerPositionHelper);
+        const markerProjectedPosition = getProjectedPosition(markerPositionHelper, camera, canvas);
     
         // move the marker to projected position
         markerElement!.style.transform = `translate(-50%, -50%) translate(${markerProjectedPosition.x}px,${markerProjectedPosition.y}px)`;
@@ -367,7 +341,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
         markerElement!.style.zIndex = (+markerProjectedPosition.z.toFixed(4) * 10000).toString();
 
         // set marker visibility
-        const globeProjectedPosition = getProjectedPosition(globe);
+        const globeProjectedPosition = getProjectedPosition(globe, camera, canvas);
         const dx = markerProjectedPosition.x - globeProjectedPosition.x;
         const dy = markerProjectedPosition.y - globeProjectedPosition.y;
         const d = Math.sqrt(dx * dx + dy * dy);
@@ -386,21 +360,21 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     let frame = raf(function render() {
       if (!isDragging) {
         if (autoOrbit && orbiting) {
-          if (Math.abs(data.dx) < 0.1) {
+          if (Math.abs(dragData.dx) < 0.1) {
             orbitSpeed = Math.min(maxOrbitSpeed, orbitSpeed + orbitAcceleration);
             globe.rotation.y += orbitSpeed;
           }
   
-          if (Math.abs(data.dy) < 0.1) {
+          if (Math.abs(dragData.dy) < 0.1) {
             globe.rotation.x += (degToRad(30) - globe.rotation.x) / 3333;
           }
         }
         
-        globe.rotation.x += draggingFactor * data.dy;
-        globe.rotation.y += draggingFactor * data.dx;
+        globe.rotation.x += draggingFactor * dragData.dy;
+        globe.rotation.y += draggingFactor * dragData.dx;
 
-        data.dx *= 0.9;
-        data.dy *= 0.9;
+        dragData.dx *= 0.9;
+        dragData.dy *= 0.9;
       }
 
       globe.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, globe.rotation.x));

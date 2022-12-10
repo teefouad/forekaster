@@ -12,23 +12,27 @@ import Head from 'next/head';
  */
 import CityPicker from '../components/CityPicker';
 import WorldMap from '../components/WorldMap';
+import * as easing from '../utils/easing';
 import { toRem } from '../utils/text';
 
 /**
  * Root
  */
 const Root = styled('div', {
-  shouldForwardProp: (prop: PropertyKey) => !([]).includes(prop.toString()),
-})((props) => css`
+  shouldForwardProp: (prop: PropertyKey) => !([
+    'cityPickerActive',
+  ]).includes(prop.toString()),
+})<{
+  cityPickerActive: boolean,
+}>(({
+  cityPickerActive,
+}) => css`
   #world-map {
-    /* position: relative; */
-    /* margin-left: ${toRem(300)}; */
-    /* left: 50%;
-    transform: translate(calc(-50% + ${toRem(300)}), 0); */
-  }
-
-  #city-picker {
-    /* transform: translateX(${toRem(300)}); */
+    opacity: ${cityPickerActive ? 0.2 : 1};
+    transform: translate(${cityPickerActive ? `calc(-50% + ${toRem(300)})` : '-50%'}, -50%);
+    transition:
+      800ms opacity ${easing.soft} ${cityPickerActive ? 0 : 300}ms,
+      800ms transform ${easing.soft} ${cityPickerActive ? 0 : 300}ms;
   }
 `);
 
@@ -36,8 +40,10 @@ const Root = styled('div', {
  * Homepage Component
  */
 const Homepage: NextPage = (props) => {
+  const [cityPickerActive, setCityPickerActive] = React.useState(false);
+  
   return (
-    <Root {...props}>
+    <Root {...props} cityPickerActive={cityPickerActive}>
       <Head>
         <title>Forekaster | A neat way to learn about the current weather and forecast</title>
         <meta name="description" content="A neat way to learn about the current weather and forecast" />
@@ -46,6 +52,7 @@ const Homepage: NextPage = (props) => {
 
       <WorldMap
         id="world-map"
+        autoOrbit={cityPickerActive}
         markers={[
           {
             id: '1',
@@ -86,7 +93,10 @@ const Homepage: NextPage = (props) => {
         ]}
       />
 
-      {/* <CityPicker id="city-picker" /> */}
+      <CityPicker id="city-picker" open={cityPickerActive} />
+
+      <button onClick={() => setCityPickerActive(true)}>Open</button>
+      <button onClick={() => setCityPickerActive(false)}>Close</button>
     </Root>
   );
 };

@@ -7,8 +7,25 @@ body {
   height: 100%;
   overflow: hidden;
   font-family: Nunito, sans-serif;
-  font-size: 16px;
+  font-size: 2vh;
   background: #e4e4e4;
+
+  /* Responsive */
+  // @media (width > 1800px) {
+  //   font-size: 20px;
+  // }
+
+  // @media (width > 2400px) {
+  //   font-size: 32px;
+  // }
+
+  // @media (width > 3200px) {
+  //   font-size: 44px;
+  // }
+
+  // @media (width > 4000px) {
+  //   font-size: 56px;
+  // }
 }
 
 * {
