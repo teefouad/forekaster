@@ -13,3 +13,5 @@ export const swiftBack = 'cubic-bezier(0.82, 0.03, 0.15, 1.53)';
 export const overshootBack = 'cubic-bezier(0.42, 0, 0, 3)';
 export const easyBack = 'cubic-bezier(0.1, 0.49, 0.51, 1.66)';
 export const easyBack2 = 'cubic-bezier(0.21, 0.66, 0.33, 1.41)';
+
+export const scaleEasing = (easing: string, scale = 1) => `cubic-bezier(${easing.replace(/[^,.\d]/g, '').split(',').map((v, n) => +v * (n%2 === 0 ? 1 : scale)).join(', ')})`;

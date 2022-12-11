@@ -93,7 +93,11 @@ const Homepage: NextPage = (props) => {
         ]}
       />
 
-      <CityPicker id="city-picker" open={cityPickerActive} />
+      <CityPicker
+        id="city-picker"
+        open={cityPickerActive}
+        onTriggerClick={() => setCityPickerActive(v => !v)}
+      />
 
       <button onClick={() => setCityPickerActive(true)}>Open</button>
       <button onClick={() => setCityPickerActive(false)}>Close</button>

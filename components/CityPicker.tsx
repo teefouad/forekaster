@@ -28,9 +28,10 @@ const Root = styled('div', {
 })<Partial<CityPickerCombinedProps>>(({
   open,
 }) => {
+  const radius = 140; // in vh
   const m = 0.4;
-  const circum = `2 * 3.14 * 50%`;
-  const halfCircum = `${m} * 3.14 * 50%`;
+  const circum = `2 * ${Math.PI} * ${radius}vh`;
+  const halfCircum = `${m} * ${Math.PI} * ${radius}vh`;
 
   return css`
     position: absolute;
@@ -38,72 +39,76 @@ const Root = styled('div', {
     left: ${toRem(50)};
     transform: translate(0, -50%);
 
-    .city-picker__track {
-      position: relative;
+    button {
+      margin-left: -10px;
+      height: 36px;
+    }
 
-      .city-picker__track-top,
-      .city-picker__track-bottom {
-        position: absolute;
-        z-index: 1;
-        top: -${toRem(16)};
-        left: 0;
-        width: ${toRem(0.5 * (open ? TRACK_WIDTH : TRACK_WIDTH_CLOSED))};
-        height: ${toRem(16)};
-        transform: translate(${open ? toRem(150) : 0}, 0);
+    .city-picker__arc {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      pointer-events: none;
+      transform: translate(${open ? toRem(150) : 0}, -50%);
+      transition: 800ms transform ${easing.soft} ${open ? 0 : 300}ms;
+    }
+
+    svg {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: ${2 * radius}vh;
+      height: ${2 * radius}vh;
+      transform: translate(0, -50%);
+    }
+
+    .city-picker__arc-middle {
+      opacity: ${open ? 0.3 : 1};
+      fill: transparent;
+      stroke: #fff;
+      stroke-width: ${toRem(open ? TRACK_WIDTH : TRACK_WIDTH_CLOSED)};
+      stroke-dasharray: calc(${halfCircum}) calc(${circum});
+      stroke-dashoffset: ${open ? 0 : `calc(${halfCircum})`};
+      transform: rotate(${open ? (2 - m) * 0.5 * Math.PI : Math.PI}rad);
+      transform-origin: center;
+      transition:
+        600ms opacity linear ${open ? 200 : 0}ms,
+        600ms stroke-width ${easing.swiftSnap} ${open ? 0 : 200}ms,
+        600ms stroke-dashoffset ${easing.swiftSnap} ${open ? 150 : 0}ms,
+        600ms transform ${easing.swiftSnap} ${open ? 150 : 0}ms;
+    }
+
+    .city-picker__arc-top,
+    .city-picker__arc-bottom {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      z-index: 1;
+      width: ${toRem(0.5 * (open ? TRACK_WIDTH : TRACK_WIDTH_CLOSED))};
+      transition: 600ms width ${easing.swiftSnap} ${open ? 0 : 200}ms;
+
+      &:before {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 18px;
+        opacity: ${open ? 0 : 1};
+        background: #fff;
+        margin-top: -18px;
+        border-radius: ${toRem(5)} ${toRem(5)} 0 0;
+        transform-origin: calc(${radius}vh) 100%;
+        transform: rotate(${open ? 40 : 0}deg);
         transition:
-          600ms width ${easing.swiftSnap} ${open ? 0 : 200}ms,
-          840ms transform ${easing.soft} ${open ? 0 : 300}ms;
-
-        &:before {
-          content: '';
-          display: block;
-          width: 100%;
-          height: 100%;
-          opacity: ${open ? 0 : 1};
-          background: #fff;
-          border-radius: ${toRem(5)} ${toRem(5)} 0 0;
-          transform-origin: calc(0.5 * 280vh) 100%;
-          transform: rotate(${open ? 24 : 0}deg);
-          transition:
-            300ms opacity linear 200ms,
-            600ms transform ${easing.swiftSnap} ${open ? 200 : 0}ms;
-        }
+          200ms opacity linear ${open ? 300 : 0}ms,
+          600ms transform ${easing.swiftSnap} ${open ? 200 : 0}ms;
       }
+    }
 
-      .city-picker__track-bottom {
-        top: 0;
-
-        &:before {
-          border-radius: 0 0 ${toRem(5)} ${toRem(5)};
-          transform: rotate(${open ? -24 : 0}deg);
-        }
-      }
-
-      > svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 280vh;
-        height: 280vh;
-        transform: translate(${open ? toRem(150) : 0}, -50%);
-        pointer-events: none;
-        transition: 800ms transform ${easing.soft} ${open ? 0 : 300}ms;
-      }
-
-      #city-picker__track-circle {
-        opacity: ${open ? 0.3 : 1};
-        stroke: #fff;
-        stroke-width: ${toRem(open ? TRACK_WIDTH : TRACK_WIDTH_CLOSED)};
-        fill: transparent;
-        stroke-dasharray: calc(${halfCircum}) calc(${circum});
-        stroke-dashoffset: ${open ? 0 : `calc(${halfCircum})`};
-        transform: rotate(${open ? (2 - m) * 0.5 * 3.14 : 3.14}rad);
-        transform-origin: center;
-        transition:
-          600ms opacity linear ${open ? 200 : 0}ms,
-          600ms stroke-width ${easing.swiftSnap} ${open ? 0 : 200}ms,
-          600ms stroke-dashoffset ${easing.swiftSnap} ${open ? 150 : 0}ms,
-          600ms transform ${easing.swiftSnap} ${open ? 150 : 0}ms;
+    .city-picker__arc-bottom {
+      &:before {
+        margin-top: 0;
+        border-radius: 0 0 ${toRem(5)} ${toRem(5)};
+        transform: rotate(${open ? -40 : 0}deg);
       }
     }
   `
@@ -114,12 +119,14 @@ const Root = styled('div', {
  */
 export interface CityPickerProps {
   open?: boolean,
+  onTriggerClick?: () => void,
 }
 
 export type CityPickerCombinedProps = CityPickerProps & JSX.IntrinsicElements['div'];
 
 const CityPicker: React.FC<CityPickerCombinedProps> = ({
-  open,
+  open = false,
+  onTriggerClick,
   ...props
 }) => {
   return (
@@ -128,36 +135,35 @@ const CityPicker: React.FC<CityPickerCombinedProps> = ({
       {...props}
       className={classnames('city-picker', props.className)}
     >
-      <div className="city-picker__track">
-        <div className="city-picker__track-top" />
+      <button onClick={onTriggerClick}>Click to open menu</button>
+
+      <div className="city-picker__arc">
+        <div className="city-picker__arc-top" />
+        <div className="city-picker__arc-bottom" />
 
         <svg>
           <defs>
             <circle
-              id="city-picker__track-circle-shape"
+              id="circle-def"
               r="50%"
               cx="50%"
               cy="50%"
             />
 
-            <clipPath id="city-picker__track-circle-clipper">
-              <use xlinkHref="#city-picker__track-circle-shape"/>
+            <clipPath id="circle-clip-path">
+              <use xlinkHref="#circle-def"/>
             </clipPath>
           </defs>
 
           <use
-            id="city-picker__track-circle"
-            xlinkHref="#city-picker__track-circle-shape"
-            clipPath="url(#city-picker__track-circle-clipper)"
+            className="city-picker__arc-middle"
+            xlinkHref="#circle-def"
+            clipPath="url(#circle-clip-path)"
           />
         </svg>
-
-        <div className="city-picker__track-bottom" />
       </div>
     </Root>
   );
 };
-
-CityPicker.defaultProps = {};
 
 export default CityPicker;
