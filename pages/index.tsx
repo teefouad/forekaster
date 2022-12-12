@@ -28,11 +28,11 @@ const Root = styled('div', {
   cityPickerActive,
 }) => css`
   #world-map {
-    opacity: ${cityPickerActive ? 0.2 : 1};
-    transform: translate(${cityPickerActive ? `calc(-50% + ${toRem(300)})` : '-50%'}, -50%);
+    opacity: ${cityPickerActive ? 0.3 : 1};
+    transform: translate(${cityPickerActive ? `calc(-50% + ${toRem(100)})` : '-50%'}, -50%) scale(${cityPickerActive ? 0.55 : 1});
     transition:
-      800ms opacity ${easing.soft} ${cityPickerActive ? 0 : 300}ms,
-      800ms transform ${easing.soft} ${cityPickerActive ? 0 : 300}ms;
+      700ms opacity ${cityPickerActive ? easing.swiftSnap : 'linear'} ${cityPickerActive ? 0 : 300}ms,
+      700ms transform ${easing.swiftSnap} ${cityPickerActive ? 0 : 180}ms;
   }
 `);
 
@@ -40,7 +40,7 @@ const Root = styled('div', {
  * Homepage Component
  */
 const Homepage: NextPage = (props) => {
-  const [cityPickerActive, setCityPickerActive] = React.useState(false);
+  const [cityPickerActive, setCityPickerActive] = React.useState(true);
   
   return (
     <Root {...props} cityPickerActive={cityPickerActive}>
@@ -52,6 +52,7 @@ const Homepage: NextPage = (props) => {
 
       <WorldMap
         id="world-map"
+        interactive={!cityPickerActive}
         autoOrbit={cityPickerActive}
         markers={[
           {

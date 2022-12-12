@@ -178,6 +178,7 @@ export interface Marker {
 
 export interface WorldMapProps {
   markers: Marker[],
+  interactive?: boolean,
   autoOrbit?: boolean,
   target?: { lat: number, lon: number },
   zoom?: number,
@@ -186,8 +187,9 @@ export interface WorldMapProps {
 export type WorldMapCombinedProps = WorldMapProps & JSX.IntrinsicElements['div'];
 
 const WorldMap: React.FC<WorldMapCombinedProps> = ({
-  autoOrbit = true,
   markers,
+  interactive = true,
+  autoOrbit = true,
   ...props
 }) => {
   const rootRef = React.useRef(null);
@@ -208,7 +210,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     } = setup3DWorld(canvas);
 
     // Auto-orbit
-    const maxOrbitSpeed = degToRad(0.025);
+    const maxOrbitSpeed = degToRad(0.05);
     const orbitAcceleration = degToRad(0.00005);
 
     let orbitSpeed = maxOrbitSpeed;
@@ -253,6 +255,8 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
 
       window.addEventListener('mousemove', dragging);
       window.addEventListener('touchmove', dragging);
+      window.addEventListener('mouseup', stopDrag);
+      window.addEventListener('touchend', stopDrag);
     };
     
     const dragging = (e: MouseEvent | TouchEvent) => {
@@ -285,10 +289,10 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       }
     };
 
-    root.addEventListener('mousedown', startDrag);
-    root.addEventListener('touchstart', startDrag);
-    window.addEventListener('mouseup', stopDrag);
-    window.addEventListener('touchend', stopDrag);
+    if (interactive) {
+      root.addEventListener('mousedown', startDrag);
+      root.addEventListener('touchstart', startDrag);
+    }
 
     // Resize canvas
     const resizeCanvas = () => {
@@ -396,7 +400,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       window.removeEventListener('touchmove', dragging);
       window.removeEventListener('resize', resizeCanvas);
     };
-  }, [markers]);
+  }, [markers, interactive, autoOrbit]);
   
   return (
     <Root ref={rootRef} {...props}>
