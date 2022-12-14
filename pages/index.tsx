@@ -10,10 +10,11 @@ import Head from 'next/head';
 /**
  * Local imports
  */
-import CityPicker from '../components/CityPicker';
+import CityPicker, { City } from '../components/CityPicker';
 import WorldMap from '../components/WorldMap';
 import * as easing from '../utils/easing';
 import { toRem } from '../utils/text';
+import WeatherForecast from '../components/WeatherForecast';
 
 /**
  * Root
@@ -28,11 +29,11 @@ const Root = styled('div', {
   cityPickerActive,
 }) => css`
   #world-map {
-    opacity: ${cityPickerActive ? 0.3 : 1};
+    opacity: ${cityPickerActive ? 0.6 : 1};
     transform: translate(${cityPickerActive ? `calc(-50% + ${toRem(100)})` : '-50%'}, -50%) scale(${cityPickerActive ? 0.55 : 1});
     transition:
-      700ms opacity ${cityPickerActive ? easing.swiftSnap : 'linear'} ${cityPickerActive ? 0 : 300}ms,
-      700ms transform ${easing.swiftSnap} ${cityPickerActive ? 0 : 180}ms;
+      600ms opacity ${cityPickerActive ? easing.swiftSnap : 'linear'} ${cityPickerActive ? 0 : 250}ms,
+      600ms transform ${easing.swiftSnap} ${cityPickerActive ? 0 : 250}ms;
   }
 `);
 
@@ -40,6 +41,7 @@ const Root = styled('div', {
  * Homepage Component
  */
 const Homepage: NextPage = (props) => {
+  const [selectedCity, setSelectedCity] = React.useState<City | null>(null);
   const [cityPickerActive, setCityPickerActive] = React.useState(true);
   
   return (
@@ -50,7 +52,9 @@ const Homepage: NextPage = (props) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <WorldMap
+      <WeatherForecast city="oslo" onClose={() => alert('close')} />
+
+      {/* <WorldMap
         id="world-map"
         interactive={!cityPickerActive}
         autoOrbit={cityPickerActive}
@@ -97,11 +101,10 @@ const Homepage: NextPage = (props) => {
       <CityPicker
         id="city-picker"
         open={cityPickerActive}
-        onTriggerClick={() => setCityPickerActive(v => !v)}
-      />
-
-      <button onClick={() => setCityPickerActive(true)}>Open</button>
-      <button onClick={() => setCityPickerActive(false)}>Close</button>
+        onTriggerClick={() => setCityPickerActive(true)}
+        onClose={() => setCityPickerActive(false)}
+        onItemSelect={cityData => setSelectedCity(cityData)}
+      /> */}
     </Root>
   );
 };
