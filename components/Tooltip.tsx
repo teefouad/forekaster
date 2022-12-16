@@ -2,117 +2,224 @@
  * Dependency imports
  */
 import React from 'react';
+import ReactDOM from 'react-dom';
 import styled from '@emotion/styled';
-import { css, SerializedStyles } from '@emotion/react';
-import classnames from 'classnames';
+import { css } from '@emotion/react';
+import { useTimeout } from '@mantine/hooks';
+import Color from 'color';
 
 /**
  * Local imports
  */
-import * as easing from '../utils/easing';
 import { toRem } from '../utils/text';
+import * as easing from '../utils/easing';
+
+/**
+ * Initialize
+ */
+let tooltipRoot: HTMLDivElement;
+
+if (typeof document !== 'undefined') {
+  tooltipRoot = document.createElement('div');
+  tooltipRoot.id = 'wb-tooltip-root';
+  document.body.append(tooltipRoot);
+}
 
 /**
  * Root
  */
-const Root = styled('span', {
+const Root = styled('div', {
   shouldForwardProp: (prop: PropertyKey) => !([
+    'target',
+    'color',
+    'opacity',
+    'position',
     'offset',
-    'textColor',
-    'bgColor',
-    'labelStyles',
+    'posX',
+    'posY',
+    'targetWidth',
+    'targetHeight',
   ]).includes(prop.toString()),
-})<Partial<TooltipCombinedProps>>(({
+})<Partial<TooltipElementProps>>(({
+  target,
+  color,
+  opacity,
+  position,
   offset,
-  textColor,
-  bgColor,
-  labelStyles,
-}) => css`
-  position: relative;
+  posX,
+  posY,
+  targetWidth,
+  targetHeight,
+}) => {
+  let top = posY!;
+  let left = posX!;
 
-  > .tooltip__label {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    padding: ${toRem(2)} ${toRem(4)} ${toRem(1)};
-    pointer-events: none;
-    white-space: nowrap;
-    opacity: 0;
-    font-family: Nunito, sans-serif;
-    font-size: ${toRem(11)};
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    color: ${textColor};
-    background: ${bgColor};
-    border-radius: ${toRem(4)};
-    transform: translate(-50%, ${toRem(-offset! + 3)});
-    transform-origin: center bottom;
-    transition:
-      opacity 150ms ${easing.easyBack},
-      transform 150ms ${easing.easyBack} 50ms;
+  top -= offset!;
+
+  if (target === 'element') {
+    left += targetWidth! / 2;
   }
   
-  &:hover {
-    > .tooltip__label {
-      opacity: 1;
-      transform: translate(-50%, ${toRem(-offset!)});
-      transition-delay: 0ms, 0ms;
-      transition-timing-function: ${easing.easyBack}, ${easing.easyBack};
-    }
-  }
+  return css`
+    position: fixed;
+    top: ${top}px;
+    left: ${left}px;
+    z-index: 99999;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translate(-50%, -100%);
 
-  > .tooltip__label {
-    ${labelStyles};
-  }
-`);
+    > div {
+      padding: ${toRem(3)} ${toRem(6)};
+      font-size: ${toRem(12)};
+      font-weight: 400;
+      color: #fff;
+      background: ${Color(color).alpha(opacity ?? 0.25).string()};
+      backdrop-filter: blur(${toRem(10)});
+      border-radius: ${toRem(4)};
+      animation: 120ms wb-tooltip-appear ${easing.snap} both;
+      
+      @keyframes wb-tooltip-appear {
+        from { opacity: 0; transform: translateY(25%); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+  `;
+});
+
+/**
+ * Component(s)
+ */
+export interface TooltipElementProps extends TooltipProps {
+  posX: number,
+  posY: number,
+  targetWidth: number,
+  targetHeight: number,
+}
+
+const TooltipElement: React.FC<TooltipElementProps> = ({
+  label,
+  ...props
+}) => {
+  return (
+    <Root {...props}>
+      <div>
+        {label}
+      </div>
+    </Root>
+  )
+};
 
 /**
  * Tooltip Component
  */
 export interface TooltipProps {
-  label: string,
+  label: string | React.ReactElement,
+  target?: 'mouse' | 'element',
+  color?: string,
+  opacity?: number,
+  position?: 'top' | 'top-start' | 'top-end' | 'center' | 'center-start' | 'center-end' | 'bottom' | 'bottom-start' | 'bottom-end',
   offset?: number,
-  textColor?: string,
-  bgColor?: string,
-  labelStyles?: string | SerializedStyles,
+  openDelay?: number,
+  closeDelay?: number,
 }
 
-export type TooltipCombinedProps = TooltipProps & JSX.IntrinsicElements['span'];
-
-const Tooltip: React.FC<TooltipCombinedProps> = ({
-  label,
-  offset = 10,
-  textColor = '#333',
-  bgColor = '#fff',
-  labelStyles = '',
+const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
   children,
+  target,
+  openDelay,
+  closeDelay,
   ...props
 }) => {
-  const [key, setKey] = React.useState(0);
-
-  const onMouseOver = (e: React.MouseEvent<HTMLSpanElement>) => {
-    setKey(Math.floor(Math.random() * 999));
-    props.onMouseOver?.(e);
+  const activePos: {
+    x: number,
+    y: number,
+    target: null | HTMLElement,
+  } = {
+    x: 0,
+    y: 0,
+    target: null,
   };
 
-  return (
-    <Root
-      {...props}
-      offset={offset}
-      textColor={textColor}
-      bgColor={bgColor}
-      labelStyles={labelStyles}
-      onMouseOver={onMouseOver}
-      className={classnames('tooltip', props.className)}
-    >
-      {children}
+  const [tooltipX, setTooltipX] = React.useState(0);
+  const [tooltipY, setTooltipY] = React.useState(0);
+  const [targetWidth, setTargetWidth] = React.useState(0);
+  const [targetHeight, setTargetHeight] = React.useState(0);
+  const [visible, setVisible] = React.useState(false);
 
-      <span className="tooltip__label">
-        {label}
-      </span>
-    </Root>
+  /* open */
+  const { start: startOpenTimeout, clear: clearOpenTimeout } = useTimeout(() => {
+    if (target === 'mouse') {
+      setTooltipX(activePos.x);
+      setTooltipY(activePos.y);
+    }
+
+    if (target === 'element' && activePos.target) {
+      const bbox = activePos.target.getBoundingClientRect();
+      setTooltipX(bbox.x);
+      setTooltipY(bbox.y);
+      setTargetWidth(bbox.width);
+      setTargetHeight(bbox.height);
+    }
+
+    setVisible(true);
+  }, openDelay!);
+
+  /* close */
+  const { start: startCloseTimeout, clear: clearCloseTimeout } = useTimeout(() => {
+    setVisible(false);
+  }, closeDelay!);
+
+  const tooltipTarget = React.cloneElement(children, {
+    onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
+      activePos.x = e.pageX;
+      activePos.y = e.pageY;
+      activePos.target = e.target as HTMLElement;
+      children?.props?.onMouseMove?.(e);
+    },
+    onMouseOver: (e: React.MouseEvent<HTMLElement>) => {
+      startOpenTimeout();
+      clearCloseTimeout();
+      children?.props?.onMouseOver?.(e);
+    },
+    onMouseOut: (e: React.MouseEvent<HTMLElement>) => {
+      clearOpenTimeout();
+      startCloseTimeout();
+      children?.props?.onMouseOut?.(e);
+    },
+    onMouseDown: (e: React.MouseEvent<HTMLElement>) => {
+      setVisible(false);
+      children?.props?.onMouseDown?.(e);
+    },
+  });
+
+  const tooltip = ReactDOM.createPortal(
+    <TooltipElement
+      {...props}
+      target={target}
+      posX={tooltipX}
+      posY={tooltipY}
+      targetWidth={targetWidth}
+      targetHeight={targetHeight}
+    />,
+    tooltipRoot,
   );
+
+  return (
+    <>
+      {tooltipTarget}
+      {visible && tooltip}
+    </>
+  );
+};
+
+Tooltip.defaultProps = {
+  target: 'element',
+  color: '#000',
+  offset: 5,
+  position: 'top',
+  openDelay: 1000,
+  closeDelay: 0,
 };
 
 export default Tooltip;

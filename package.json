@@ -11,8 +11,10 @@
   "dependencies": {
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@mantine/hooks": "^5.9.4",
     "axios": "^1.2.1",
     "classnames": "^2.3.2",
+    "color": "^4.2.3",
     "next": "12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -21,6 +23,7 @@
     "three": "^0.147.0"
   },
   "devDependencies": {
+    "@types/color": "^3.0.3",
     "@types/node": "18.11.10",
     "@types/react": "18.0.26",
     "@types/react-dom": "18.0.9",

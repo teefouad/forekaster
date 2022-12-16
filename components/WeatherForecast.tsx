@@ -14,8 +14,9 @@ import api from '../services/api';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import CloudTooltip from './CloudTooltip';
-import Tooltip from './Tooltip';
-
+import NativeTooltip from './Tooltip';
+import AnimatedNumber from './AnimatedNumber';
+console.log(NativeTooltip)
 /**
  * Root
  */
@@ -69,7 +70,7 @@ const Root = styled('div', {
     }
   }
 
-  .weather-forecast__close-button {
+  .close-button {
     position: absolute;
     top: ${toRem(40)};
     right: ${toRem(34)};
@@ -151,7 +152,7 @@ const Root = styled('div', {
   }
 
   .current-weather__wind {
-    span {
+    small {
       margin-right: ${toRem(10)};
       font-size: ${toRem(11)};
       font-weight: 400;
@@ -166,7 +167,74 @@ const Root = styled('div', {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: ${toRem(50)};
+    margin: ${toRem(50)};
+  }
+
+  .forecast-graph {
+    width: 100%;
+    height: 33vh;
+    margin-bottom: ${toRem(10)};
+  }
+  
+  .forecast-graph__point {
+    fill: #333;
+    transform-origin: center;
+    animation: weather-forecast-forecast-graph-point-appear 350ms ${easing.easyBack} both 400ms;
+
+    @keyframes weather-forecast-forecast-graph-point-appear {
+      from {
+        opacity: 0;
+        r: 0;
+      }
+
+      to {
+        opacity: 1;
+        r: 4;
+      }
+    }
+  }
+
+  .forecast-graph__line {
+    stroke: #333;
+    stroke-width: ${toRem(2)};
+    opacity: 0.1;
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: weather-forecast-forecast-graph-line-appear 350ms ${easing.snapOut} both 400ms;
+
+    @keyframes weather-forecast-forecast-graph-line-appear {
+      from {
+        stroke-dashoffset: 400;
+      }
+
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  }
+
+  .forecast-chart-refs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 33vh;
+  }
+
+  .forecast-chart-vertical-ref {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    opacity: 0.1;
+    border-right: 1px dashed #333;
+  }
+
+  .forecast-chart-horizontal-ref {
+    position: absolute;
+    left: 3%;
+    width: 94%;
+    opacity: 0.05;
+    border-top: 1px dashed #333;
   }
 
   .forecast-data-list {
@@ -217,11 +285,11 @@ export type WeatherForecastCombinedProps = WeatherForecastProps & JSX.IntrinsicE
 const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
   city,
   intervalInHours,
-  count,
+  count = 8,
   onClose,
   ...props
 }) => {
-  const { data, isLoading, error } = useQuery(city, ({ queryKey }) => api.client.weatherDataForCity.get(queryKey[0]));
+  const { data, isLoading, error } = useQuery([city, count], ({ queryKey }) => api.client.weatherDataForCity.get(queryKey[0].toString(), +queryKey[1]));
 
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -245,7 +313,6 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
     )
   }
   
-
   if (error) {
     return (
       <div>
@@ -253,10 +320,43 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
       </div>
     )
   }
+
+  const values = data.forecast.map((d: any) => d.temp);
+  const min = Math.min.apply(null, values);
+  const max = Math.max.apply(null, values);
+  const span = max - min;
+
+  // calculate points data
+  const chartPoints = values.map((p: any, i: number) => ({
+    x: (i * 100 / values.length) + 50 / values.length,
+    y: Math.max(2, Math.min(98, (100 - ((p - min) * 100 / span)))),
+  }));
+
+  // calculate data for lines connecting the points
+  const chartLines = chartPoints.reduce((prev: any, next: any) => {
+    if (prev.length > 0) {
+      prev[prev.length - 1] = {
+        ...prev[prev.length - 1],
+        x2: next.x,
+        y2: next.y,
+      }
+    }
+
+    if (prev.length < chartPoints.length - 1) {
+      prev[prev.length] = {
+        x1: next.x,
+        y1: next.y,
+      }
+    }
+
+    return prev;
+  }, []);
   
   return (
     <Root {...props} count={count}>
-      <div className="weather-forecast__close-button">
+      <h1>asdasd</h1>
+      
+      <div className="close-button">
         <button onClick={onClose} title="Back">
           Close
         </button>
@@ -264,23 +364,76 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
 
       <div className="current-weather weather-card">
         <div className="current-weather__wind weather-card__head">
-          <span>Wind</span> {data.weather.wind.toFixed(2)} km/h
+          <small>Wind</small>
+          <AnimatedNumber initialValue={0} value={+data.weather.wind} delay={400} useIntegers={false} easing="easeOut" />
+          <span>km/h</span>
         </div>
 
         <div className="current-weather__temp temp">
-          {data.weather.temp}
+          <AnimatedNumber initialValue={0} value={data.weather.temp} delay={400} />
         </div>
 
         <div className="current-weather__description weather-card__foot">
-          <Tooltip label={data.weather.weather.description}>
-            {data.weather.weather.main}
-          </Tooltip>
+          {data.weather.weather.main}
         </div>
       </div>
 
       <div className="forecast-chart">
+        <svg className="forecast-graph" xmlns="http://www.w3.org/2000/svg">
+            {
+              chartPoints.map((point: any, n: number) => (
+                <circle
+                  key={`circle-${n}`}
+                  className="forecast-graph__point"
+                  style={{ animationDelay: `${n * 100}ms` }}
+                  cx={`${point.x}%`} 
+                  cy={`${point.y}%`} 
+                  r="4"
+                />
+              ))
+            }
 
+            {
+              chartLines.map((line: any, n: number) => (
+                <line
+                  key={`line-${n}`}
+                  className="forecast-graph__line"
+                  style={{ animationDelay: `${n * 100}ms` }}
+                  x1={`${line.x1}%`}
+                  y1={`${line.y1}%`}
+                  x2={`${line.x2}%`}
+                  y2={`${line.y2}%`}
+                />
+              ))
+            }
+        </svg>
 
+        <div className="forecast-chart-refs">
+          {/* {
+            chartPoints.map((point: any, n: number) => (
+              <div
+                key={`ref-line-v-${n}`}
+                className="forecast-chart-vertical-ref"
+                style={{
+                  left: `${point.x}%`,
+                }}
+              />
+            ))
+          } */}
+
+          {
+            Array.from({ length: max - min }).map((v: any, n: number) => (
+              <div
+                key={`ref-line-h-${n}`}
+                className="forecast-chart-horizontal-ref"
+                style={{
+                  top: `${n * (100 / (max - min)!)}%`,
+                }}
+              />
+            ))
+          }
+        </div>
+        
         <ul className="forecast-data-list">
           {
             data.forecast.map((weatherForecast: any, n: number) => (
