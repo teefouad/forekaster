@@ -52,7 +52,7 @@ const Homepage: NextPage = (props) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <WeatherForecast city="oslo" onClose={() => alert('close')} />
+      <WeatherForecast city="amsterdam" onClose={() => alert('close')} />
 
       {/* <WorldMap
         id="world-map"

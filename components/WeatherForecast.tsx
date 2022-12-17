@@ -6,6 +6,8 @@ import Link from 'next/link';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
 import { useQuery } from 'react-query';
+import { useDebouncedState } from '@mantine/hooks';
+
 
 /**
  * Local imports
@@ -13,10 +15,9 @@ import { useQuery } from 'react-query';
 import api from '../services/api';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
-import CloudTooltip from './CloudTooltip';
-import NativeTooltip from './Tooltip';
 import AnimatedNumber from './AnimatedNumber';
-console.log(NativeTooltip)
+import Tooltip from './Tooltip';
+
 /**
  * Root
  */
@@ -70,10 +71,58 @@ const Root = styled('div', {
     }
   }
 
+  .header {
+    position: fixed;
+    top: ${toRem(120)};
+    left: ${toRem(50)};
+    display: flex;
+    flex-direction: column-reverse;
+    animation: weather-forecast-header-appear 350ms ${easing.snapOut} both 200ms;
+
+    @keyframes weather-forecast-header-appear {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 100%, 0);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+  }
+
+  .city-name {
+    margin: 0;
+    font-size: ${toRem(48)};
+    font-weight: 600;
+    text-transform: capitalize;
+    line-height: 1.4;
+  }
+
+  .today {
+    display: block;
+    font-size: ${toRem(18)};
+    font-weight: 300;
+    animation: weather-forecast-today-appear 350ms ${easing.snapOut} both 200ms;
+
+    @keyframes weather-forecast-today-appear {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 100%, 0);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+  }
+
   .close-button {
     position: absolute;
     top: ${toRem(40)};
-    right: ${toRem(34)};
+    inset-inline-end: ${toRem(34)};
     z-index: 9;
     animation: weather-forecast-close-button-appear 400ms ${easing.snapOut} both 600ms;
 
@@ -129,7 +178,7 @@ const Root = styled('div', {
   .current-weather {
     position: fixed;
     top: ${toRem(100)};
-    right: ${toRem(50)};
+    inset-inline-end: ${toRem(50)};
     line-height: 1.4;
     align-items: end;
     animation: weather-forecast-current-weather-appear 350ms ${easing.snapOut} both 400ms;
@@ -145,20 +194,20 @@ const Root = styled('div', {
         transform: translate3d(0, 0, 0);
       }
     }
-  }
 
-  .current-weather__temp {
-    font-size: ${toRem(70)};
-  }
+    &__wind {
+      small {
+        margin-right: ${toRem(10)};
+        font-size: ${toRem(11)};
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #999;
+      }
+    }
 
-  .current-weather__wind {
-    small {
-      margin-right: ${toRem(10)};
-      font-size: ${toRem(11)};
-      font-weight: 400;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #999;
+    &__temp {
+      font-size: ${toRem(70)};
     }
   }
 
@@ -167,13 +216,15 @@ const Root = styled('div', {
     bottom: 0;
     left: 0;
     right: 0;
-    margin: ${toRem(50)};
+    overflow-x: auto;
+    padding: ${toRem(50)} ${toRem(0)} ${toRem(30)};
   }
 
   .forecast-graph {
     width: 100%;
     height: 33vh;
     margin-bottom: ${toRem(10)};
+    min-width: ${toRem(850)};
   }
   
   .forecast-graph__point {
@@ -213,35 +264,12 @@ const Root = styled('div', {
     }
   }
 
-  .forecast-chart-refs {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 33vh;
-  }
-
-  .forecast-chart-vertical-ref {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    opacity: 0.1;
-    border-right: 1px dashed #333;
-  }
-
-  .forecast-chart-horizontal-ref {
-    position: absolute;
-    left: 3%;
-    width: 94%;
-    opacity: 0.05;
-    border-top: 1px dashed #333;
-  }
-
   .forecast-data-list {
     display: flex;
     text-align: center;
     list-style: none;
     padding: 0;
+    min-width: ${toRem(850)};
 
     .forecast-data {
       flex: 1;
@@ -265,6 +293,221 @@ const Root = styled('div', {
         font-size: ${toRem(40)};
         font-weight: 300;
         line-height: 1.8;
+      }
+    }
+  }
+
+  /* Responsive */
+
+  @media (width < 960px) {
+    .city-name {
+      font-size: ${toRem(36)};
+    }
+
+    .current-weather {
+      &__temp {
+        font-size: ${toRem(54)};
+      }
+    }
+  }
+
+  @media (width < 480px) {
+    .header {
+      top: ${toRem(80)};
+      inset-inline-start: ${toRem(20)};
+    }
+
+    .today {
+      font-size: ${toRem(16)};
+    }
+
+    .city-name {
+      font-size: ${toRem(32)};
+    }
+
+    .close-button {
+      top: ${toRem(20)};
+      inset-inline-end: ${toRem(4)};
+    }
+
+    .current-weather {
+      top: ${toRem(80)};
+      inset-inline-end: ${toRem(20)};
+
+      &__temp {
+        font-size: ${toRem(42)};
+        font-weight: 300;
+      }
+    }
+
+    .forecast-chart {
+      padding-bottom: ${toRem(20)};
+    }
+
+    .forecast-graph {
+      height: 44vh;
+    }
+
+    .forecast-data-list {
+      .forecast-data {
+        &__time {
+          font-size: ${toRem(14)};
+        }
+
+        &__temp {
+          font-size: ${toRem(32)};
+        }
+
+        &__description {
+          font-size: ${toRem(14)};
+        }
+      }
+    }
+  }
+
+  @media (width < 340px) {
+    .header {
+      top: ${toRem(70)};
+      left: ${toRem(10)};
+    }
+
+    .today {
+      font-size: ${toRem(13)};
+    }
+
+    .city-name {
+      font-size: ${toRem(24)};
+    }
+
+    .close-button {
+      top: ${toRem(14)};
+    }
+
+    .current-weather {
+      top: ${toRem(70)};
+      inset-inline-end: ${toRem(10)};
+
+      &__wind {
+        font-size: ${toRem(13)};
+      }
+
+      &__temp {
+        font-size: ${toRem(32)};
+        font-weight: 300;
+      }
+
+      &__description {
+        font-size: ${toRem(13)};
+      }
+    }
+
+    .forecast-chart {
+      padding-bottom: ${toRem(10)};
+    }
+
+    .forecast-data-list {
+      .forecast-data {
+        &__time {
+          font-size: ${toRem(13)};
+        }
+
+        &__temp {
+          font-size: ${toRem(24)};
+        }
+
+        &__description {
+          font-size: ${toRem(13)};
+        }
+      }
+    }
+  }
+
+  .loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .error {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+    
+    strong {
+      margin-top: ${toRem(-100)};
+      font-size: ${toRem(80)};
+      font-weight: 1000;
+    }
+
+    p {
+      line-height: 1.8;
+      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+    }
+
+    a {
+      position: relative;
+      display: inline-block;
+      margin-top: ${toRem(40)};
+      padding: ${toRem(10)} ${toRem(24)};
+      font-size: ${toRem(14)};
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      text-decoration: none;
+      color: #333;
+      background: #fff;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+      border-radius: 999px;
+      transition: padding-inline-start 300ms ${easing.snapInOut};
+      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+
+      &:before {
+        content: '';
+        display: block;
+        width: ${toRem(6)};
+        height: ${toRem(6)};
+        position: absolute;
+        top: 50%;
+        inset-inline-start: ${toRem(18)};
+        opacity: 0;
+        border-top: ${toRem(2)} solid #333;
+        border-inline-start: ${toRem(2)} solid #333;
+        transform: translate(0, -50%) rotate(-45deg);
+        transition: opacity 200ms ${easing.snapInOut};
+      }
+
+      &:hover {
+        padding-inline-start: ${toRem(40)};
+        transition-timing-function: ${easing.swiftBack};
+
+        &:before {
+          opacity: 1;
+          transition-delay: 100ms;
+        }
+      }
+    }
+
+    @keyframes weather-forecast-error-appear {
+      from {
+        opacity: 0;
+        transform: translate3d(0, ${toRem(50)}, 0);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
       }
     }
   }
@@ -304,20 +547,36 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [onClose]);
-
-  if (isLoading) {
-    return (
-      <div>
-        isLoading!!!
-      </div>
-    )
-  }
   
   if (error) {
     return (
-      <div>
-        Error!!!
-      </div>
+      <Root {...props}>
+        <div className="error">
+          <strong>Oops!</strong>
+
+          <p>
+            Something went wrong :(
+            <br />
+            We could not load forecast data for this city.
+            <br />
+            <Link href="/">
+              <a>
+                Select another city
+              </a>
+            </Link>
+          </p>
+        </div>
+      </Root>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <Root {...props}>
+        <div className="loading">
+          <span>Loading...</span>
+        </div>
+      </Root>
     )
   }
 
@@ -353,13 +612,25 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
   }, []);
   
   return (
-    <Root {...props} count={count}>
-      <h1>asdasd</h1>
+    <Root {...props}>
+      <div className="header">
+        <h1 className="city-name">{city}</h1>
+
+        <span className="today">
+          {(new Date()).toLocaleDateString('en-US', {
+            day: '2-digit',
+            month: 'long',
+            weekday: 'long',
+          })}
+        </span>
+      </div>
       
       <div className="close-button">
-        <button onClick={onClose} title="Back">
-          Close
-        </button>
+        <Tooltip label="Back" target="mouse" position="bottom-end" offset={[10, 5]}>
+          <button onClick={onClose}>
+            Close
+          </button>
+        </Tooltip>
       </div>
 
       <div className="current-weather weather-card">
@@ -380,85 +651,66 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
 
       <div className="forecast-chart">
         <svg className="forecast-graph" xmlns="http://www.w3.org/2000/svg">
-            {
-              chartPoints.map((point: any, n: number) => (
-                <circle
-                  key={`circle-${n}`}
-                  className="forecast-graph__point"
-                  style={{ animationDelay: `${n * 100}ms` }}
-                  cx={`${point.x}%`} 
-                  cy={`${point.y}%`} 
-                  r="4"
-                />
-              ))
-            }
-
-            {
-              chartLines.map((line: any, n: number) => (
-                <line
-                  key={`line-${n}`}
-                  className="forecast-graph__line"
-                  style={{ animationDelay: `${n * 100}ms` }}
-                  x1={`${line.x1}%`}
-                  y1={`${line.y1}%`}
-                  x2={`${line.x2}%`}
-                  y2={`${line.y2}%`}
-                />
-              ))
-            }
-        </svg>
-
-        <div className="forecast-chart-refs">
-          {/* {
-            chartPoints.map((point: any, n: number) => (
-              <div
-                key={`ref-line-v-${n}`}
-                className="forecast-chart-vertical-ref"
-                style={{
-                  left: `${point.x}%`,
-                }}
-              />
-            ))
-          } */}
-
           {
-            Array.from({ length: max - min }).map((v: any, n: number) => (
-              <div
-                key={`ref-line-h-${n}`}
-                className="forecast-chart-horizontal-ref"
-                style={{
-                  top: `${n * (100 / (max - min)!)}%`,
-                }}
+            chartPoints.map((point: any, n: number) => (
+              <circle
+                key={`circle-${n}`}
+                className="forecast-graph__point"
+                style={{ animationDelay: `${n * 100}ms` }}
+                cx={`${point.x}%`} 
+                cy={`${point.y}%`} 
+                r="4"
               />
             ))
           }
-        </div>
-        
+
+          {
+            chartLines.map((line: any, n: number) => (
+              <line
+                key={`line-${n}`}
+                className="forecast-graph__line"
+                style={{ animationDelay: `${n * 100}ms` }}
+                x1={`${line.x1}%`}
+                y1={`${line.y1}%`}
+                x2={`${line.x2}%`}
+                y2={`${line.y2}%`}
+              />
+            ))
+          }
+        </svg>
+
         <ul className="forecast-data-list">
           {
             data.forecast.map((weatherForecast: any, n: number) => (
               <li
                 key={n}
                 className="forecast-data weather-card"
-                title={weatherForecast.weather.description}
-                style={{
-                  animationDelay: `${n * 50}ms`,
-                }}
+                style={{ animationDelay: `${n * 50}ms` }}
               >
-                <div className="forecast-data__time weather-card__head">
-                  {(new Date(weatherForecast.time)).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </div>
+                <Tooltip
+                  label={weatherForecast.weather.description}
+                  target="mouse"
+                  position="top-center"
+                  offset={[0, -10]}
+                  tooltipStyles={css`text-transform: capitalize;`}
+                >
+                  <div>
+                    <div className="forecast-data__time weather-card__head">
+                      {(new Date(weatherForecast.time)).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
 
-                <div className="forecast-data__temp temp">
-                  {weatherForecast.temp}
-                </div>
+                    <div className="forecast-data__temp temp">
+                      {weatherForecast.temp}
+                    </div>
 
-                <div className="forecast-data__description weather-card__foot">
-                  {weatherForecast.weather.main}
-                </div>
+                    <div className="forecast-data__description weather-card__foot">
+                      {weatherForecast.weather.main}
+                    </div>
+                  </div>
+                </Tooltip>
               </li>
             ))
           }

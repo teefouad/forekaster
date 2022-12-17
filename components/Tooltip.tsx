@@ -4,7 +4,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import styled from '@emotion/styled';
-import { css } from '@emotion/react';
+import { css, SerializedStyles } from '@emotion/react';
 import { useTimeout } from '@mantine/hooks';
 import Color from 'color';
 
@@ -30,60 +30,63 @@ if (typeof document !== 'undefined') {
  */
 const Root = styled('div', {
   shouldForwardProp: (prop: PropertyKey) => !([
-    'target',
     'color',
+    'backgroundColor',
     'opacity',
-    'position',
     'offset',
+    'position',
     'posX',
     'posY',
     'targetWidth',
     'targetHeight',
+    'tooltipStyles',
   ]).includes(prop.toString()),
 })<Partial<TooltipElementProps>>(({
-  target,
   color,
+  backgroundColor,
   opacity,
-  position,
   offset,
+  position,
   posX,
   posY,
   targetWidth,
   targetHeight,
+  tooltipStyles,
 }) => {
-  let top = posY!;
-  let left = posX!;
+  const offsetX = (offset as [number, number])[0] ?? offset;
+  const offsetY = (offset as [number, number])[1] ?? offset;
+  const [y, x] = position!.split('-');
 
-  top -= offset!;
+  const positionStyles = css`
+    top: ${toRem(posY! + ({ top: 0, center: 0.5, bottom: 1 }[y] ?? 0) * targetHeight! + offsetY)};
+    inset-inline-start: ${toRem(posX! + ({ start: 0, end: 1 }[x] ?? 0.5) * targetWidth! + offsetX)};
+    transform: translate(${({ start: -100, end: 0 }[x] ?? -50)}%, -${{top: 100, center: 50, bottom: 0}[y]}%);
+  `;
 
-  if (target === 'element') {
-    left += targetWidth! / 2;
-  }
-  
   return css`
     position: fixed;
-    top: ${top}px;
-    left: ${left}px;
     z-index: 99999;
     pointer-events: none;
     white-space: nowrap;
-    transform: translate(-50%, -100%);
+    ${positionStyles};
 
     > div {
       padding: ${toRem(3)} ${toRem(6)};
-      font-size: ${toRem(12)};
+      font-size: ${toRem(11)};
       font-weight: 400;
-      color: #fff;
-      background: ${Color(color).alpha(opacity ?? 0.25).string()};
+      color: ${color};
+      background: ${Color(backgroundColor).alpha(opacity!).string()};
       backdrop-filter: blur(${toRem(10)});
       border-radius: ${toRem(4)};
-      animation: 120ms wb-tooltip-appear ${easing.snap} both;
+      animation: 120ms wb-tooltip-appear ${easing.overshootBack} both;
       
       @keyframes wb-tooltip-appear {
-        from { opacity: 0; transform: translateY(25%); }
+        from { opacity: 0; transform: translateY(10%); }
         to { opacity: 1; transform: translateY(0); }
       }
     }
+
+    ${tooltipStyles};
   `;
 });
 
@@ -117,18 +120,26 @@ export interface TooltipProps {
   label: string | React.ReactElement,
   target?: 'mouse' | 'element',
   color?: string,
+  backgroundColor?: string,
   opacity?: number,
-  position?: 'top' | 'top-start' | 'top-end' | 'center' | 'center-start' | 'center-end' | 'bottom' | 'bottom-start' | 'bottom-end',
-  offset?: number,
+  position?: 'top-start' | 'top-center' | 'top-end' | 'center-start' | 'center' | 'center-end' | 'bottom-start' | 'bottom-center' | 'bottom-end',
+  offset?: number | [number, number],
   openDelay?: number,
   closeDelay?: number,
+  tooltipStyles?: SerializedStyles | string,
 }
 
 const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
   children,
-  target,
-  openDelay,
-  closeDelay,
+  target = 'mouse',
+  color = '#fff',
+  backgroundColor = '#333',
+  opacity = 1,
+  offset = 0,
+  position = 'top-center',
+  openDelay = 1000,
+  closeDelay = 0,
+  tooltipStyles,
   ...props
 }) => {
   const activePos: {
@@ -156,6 +167,7 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
 
     if (target === 'element' && activePos.target) {
       const bbox = activePos.target.getBoundingClientRect();
+
       setTooltipX(bbox.x);
       setTooltipY(bbox.y);
       setTargetWidth(bbox.width);
@@ -196,11 +208,16 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
   const tooltip = ReactDOM.createPortal(
     <TooltipElement
       {...props}
-      target={target}
+      color={color}
+      backgroundColor={backgroundColor}
+      opacity={opacity}
+      offset={offset}
+      position={position}
       posX={tooltipX}
       posY={tooltipY}
       targetWidth={targetWidth}
       targetHeight={targetHeight}
+      tooltipStyles={tooltipStyles}
     />,
     tooltipRoot,
   );
@@ -211,15 +228,6 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
       {visible && tooltip}
     </>
   );
-};
-
-Tooltip.defaultProps = {
-  target: 'element',
-  color: '#000',
-  offset: 5,
-  position: 'top',
-  openDelay: 1000,
-  closeDelay: 0,
 };
 
 export default Tooltip;
