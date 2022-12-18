@@ -297,6 +297,96 @@ const Root = styled('div', {
     }
   }
 
+  .loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .error {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+    
+    strong {
+      margin-top: ${toRem(-100)};
+      font-size: ${toRem(80)};
+      font-weight: 1000;
+    }
+
+    p {
+      line-height: 1.8;
+      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+    }
+
+    a {
+      position: relative;
+      display: inline-block;
+      margin-top: ${toRem(40)};
+      padding: ${toRem(10)} ${toRem(24)};
+      font-size: ${toRem(14)};
+      font-weight: 500;
+      letter-spacing: 0.025em;
+      text-decoration: none;
+      color: #333;
+      background: #fff;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+      border-radius: 999px;
+      transition: padding-inline-start 300ms ${easing.snapInOut};
+      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
+
+      &:before {
+        content: '';
+        display: block;
+        width: ${toRem(6)};
+        height: ${toRem(6)};
+        position: absolute;
+        top: 50%;
+        inset-inline-start: ${toRem(18)};
+        opacity: 0;
+        border-top: ${toRem(2)} solid #333;
+        border-inline-start: ${toRem(2)} solid #333;
+        transform: translate(0, -50%) rotate(-45deg);
+        transition: opacity 200ms ${easing.snapInOut};
+      }
+
+      &:hover {
+        padding-inline-start: ${toRem(40)};
+        transition-timing-function: ${easing.swiftBack};
+
+        &:before {
+          opacity: 1;
+          transition-delay: 100ms;
+        }
+      }
+    }
+
+    @keyframes weather-forecast-error-appear {
+      from {
+        opacity: 0;
+        transform: translate3d(0, ${toRem(50)}, 0);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+  }
+
   /* Responsive */
 
   @media (width < 960px) {
@@ -418,96 +508,6 @@ const Root = styled('div', {
         &__description {
           font-size: ${toRem(13)};
         }
-      }
-    }
-  }
-
-  .loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .error {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
-    
-    strong {
-      margin-top: ${toRem(-100)};
-      font-size: ${toRem(80)};
-      font-weight: 1000;
-    }
-
-    p {
-      line-height: 1.8;
-      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
-    }
-
-    a {
-      position: relative;
-      display: inline-block;
-      margin-top: ${toRem(40)};
-      padding: ${toRem(10)} ${toRem(24)};
-      font-size: ${toRem(14)};
-      font-weight: 500;
-      letter-spacing: 0.025em;
-      text-decoration: none;
-      color: #333;
-      background: #fff;
-      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
-      border-radius: 999px;
-      transition: padding-inline-start 300ms ${easing.snapInOut};
-      animation: weather-forecast-error-appear 950ms ${easing.snapInOut} both;
-
-      &:before {
-        content: '';
-        display: block;
-        width: ${toRem(6)};
-        height: ${toRem(6)};
-        position: absolute;
-        top: 50%;
-        inset-inline-start: ${toRem(18)};
-        opacity: 0;
-        border-top: ${toRem(2)} solid #333;
-        border-inline-start: ${toRem(2)} solid #333;
-        transform: translate(0, -50%) rotate(-45deg);
-        transition: opacity 200ms ${easing.snapInOut};
-      }
-
-      &:hover {
-        padding-inline-start: ${toRem(40)};
-        transition-timing-function: ${easing.swiftBack};
-
-        &:before {
-          opacity: 1;
-          transition-delay: 100ms;
-        }
-      }
-    }
-
-    @keyframes weather-forecast-error-appear {
-      from {
-        opacity: 0;
-        transform: translate3d(0, ${toRem(50)}, 0);
-      }
-
-      to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
       }
     }
   }

@@ -5,108 +5,65 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
 import type { NextPage } from 'next';
-import Head from 'next/head';
 
 /**
  * Local imports
  */
-import CityPicker, { City } from '../components/CityPicker';
+import Layout from '../components/Layout';
 import WorldMap from '../components/WorldMap';
-import * as easing from '../utils/easing';
 import { toRem } from '../utils/text';
-import WeatherForecast from '../components/WeatherForecast';
+import { animate } from '../utils/animation';
 
 /**
  * Root
  */
 const Root = styled('div', {
-  shouldForwardProp: (prop: PropertyKey) => !([
-    'cityPickerActive',
-  ]).includes(prop.toString()),
-})<{
-  cityPickerActive: boolean,
-}>(({
-  cityPickerActive,
-}) => css`
+  shouldForwardProp: (prop: PropertyKey) => !([]).includes(prop.toString()),
+})<{}>((props) => css`
   #world-map {
-    opacity: ${cityPickerActive ? 0.6 : 1};
-    transform: translate(${cityPickerActive ? `calc(-50% + ${toRem(100)})` : '-50%'}, -50%) scale(${cityPickerActive ? 0.55 : 1});
-    transition:
-      600ms opacity ${cityPickerActive ? easing.swiftSnap : 'linear'} ${cityPickerActive ? 0 : 250}ms,
-      600ms transform ${easing.swiftSnap} ${cityPickerActive ? 0 : 250}ms;
+    /* width: 85vw;
+    height: 85vw;
+    margin-left: ${toRem(300)}; */
   }
 `);
 
 /**
- * Homepage Component
+ * HomePage Component
  */
-const Homepage: NextPage = (props) => {
-  const [selectedCity, setSelectedCity] = React.useState<City | null>(null);
-  const [cityPickerActive, setCityPickerActive] = React.useState(true);
-  
+const HomePage: NextPage = (props) => {
+  const [config, setConfig] = React.useState({
+    interactive: true,
+    autoOrbit: 'off',
+    target: undefined,
+    zoom: 1,
+  });
+
   return (
-    <Root {...props} cityPickerActive={cityPickerActive}>
-      <Head>
-        <title>Forekaster | A neat way to learn about the current weather and forecast</title>
-        <meta name="description" content="A neat way to learn about the current weather and forecast" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <Layout {...props} >
+      <Root>
+        <button onClick={() => setConfig(v => ({ ...v, interactive: !v.interactive }))}>Toggle Interactive ({config.interactive ? 'on' : 'off'})</button>
+        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'slow' }))}>AutoOrbit: Slow ({config.autoOrbit})</button>
+        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'fast' }))}>AutoOrbit: Fast ({config.autoOrbit})</button>
+        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'off' }))}>AutoOrbit: Off ({config.autoOrbit})</button>
+        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 21.414795, lon: 39.807913, } }))}>Makkah</button>
+        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 30.01, lon: 31.14, } }))}>Target Cairo</button>
+        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 36.42, lon: 3.08, } }))}>Target Algiers</button>
+        <button onClick={() => setConfig(v => ({ ...v, target: { lat: -28.814427, lon: 24.817810, } }))}>Target South Africa</button>
+        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 65.296558, lon: -44.267634, } }))}>Target Greenland</button>
+        <button onClick={() => setConfig(v => ({ ...v, zoom: 10 }))}>Zoom In</button>
+        <button onClick={() => setConfig(v => ({ ...v, zoom: 5 }))}>Zoom midway</button>
+        <button onClick={() => setConfig(v => ({ ...v, zoom: 1 }))}>Zoom Out</button>
 
-      <WeatherForecast city="amsterdam" onClose={() => alert('close')} />
-
-      {/* <WorldMap
-        id="world-map"
-        interactive={!cityPickerActive}
-        autoOrbit={cityPickerActive}
-        markers={[
-          {
-            id: '1',
-            label: 'Cairo, Egypt',
-            lat: 30.040639,
-            lon: 31.238230,
-          },
-          {
-            id: '2',
-            label: 'Jerusalem, Palestine',
-            lat: 31.759729,
-            lon: 35.212102,
-          },
-          {
-            id: '3',
-            label: 'Bairut, Lebanon',
-            lat: 33.893540,
-            lon: 35.500782,
-          },
-          {
-            id: '4',
-            label: 'Clear : 5℃',
-            lat: 64.463597,
-            lon: 16.786608,
-          },
-          {
-            id: '5',
-            label: 'Iceland',
-            lat: 64.810050,
-            lon: -18.490203,
-          },
-          {
-            id: '6',
-            label: 'Greenland',
-            lat: 59.957960,
-            lon: -43.552618,
-          },
-        ]}
-      />
-
-      <CityPicker
-        id="city-picker"
-        open={cityPickerActive}
-        onTriggerClick={() => setCityPickerActive(true)}
-        onClose={() => setCityPickerActive(false)}
-        onItemSelect={cityData => setSelectedCity(cityData)}
-      /> */}
-    </Root>
+        <WorldMap
+          id="world-map"
+          interactive={config.interactive}
+          autoOrbit={config.autoOrbit}
+          target={config.target}
+          zoom={config.zoom}
+        />
+      </Root>
+    </Layout>
   );
 };
 
-export default Homepage;
+export default HomePage;
