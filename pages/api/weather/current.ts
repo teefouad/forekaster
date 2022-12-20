@@ -6,7 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 /**
  * Local imports
  */
-import api from '../../services/api';
+import api from '../../../services/api';
 
 /**
  * Handler
@@ -23,7 +23,7 @@ export default async function handler(
     return;
   }
 
-  const weatherData = await api.weather.get(req.query.city.toString());
+  const weatherData = await api.server.weather.get(req.query.city.toString());
 
   res.status(200).json(weatherData);
 }

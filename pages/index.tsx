@@ -5,6 +5,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
 import type { NextPage } from 'next';
+import axios from 'axios';
 
 /**
  * Local imports
@@ -15,6 +16,8 @@ import { animate } from '../utils/animation';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import citiesData from '../data/cities.json';
+
+const markerInfoCache: any = {};
 
 const mapMarkers = citiesData.map((cityData, n) => ({
   id: n,
@@ -113,7 +116,6 @@ const HomePage: NextPage = (props) => {
     };
   }, []);
 
-
   return (
     <Layout {...props} >
       <Root>
@@ -125,28 +127,38 @@ const HomePage: NextPage = (props) => {
           canvasHeight={mapSize}
           zoom={10}
           getMarkerInfo={
-            () => new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(
-                  {
-                    content: (
-                      <span>
-                        Clear
-                        <span
-                          style={{
-                            marginLeft: 5,
-                            marginRight: 3,
-                            background: 'rgba(0, 0, 0, 0.1)',
-                            borderRadius: 5,
-                            padding: '1px 3px 0',
-                          }}
-                        >5℃</span>
-                      </span>
-                    ),
-                    count: 10,
-                  }
-                );
-              }, 2000);
+            (markerData) => new Promise(async (resolve) => {
+              if (markerInfoCache[markerData.label]) {
+                const cached = markerInfoCache[markerData.label];
+
+                if (cached.expires > +new Date()) {
+                  return resolve(cached.response);
+                }
+              }
+
+              const { data } = await axios.get(`/api/weather/current?city=${markerData.label}`);
+              const iconResponse = await axios.get(`http://openweathermap.org/img/wn/${data.weather.icon}@2x.png`, { responseType: 'blob' });
+              const reader = new FileReader();
+              reader.readAsDataURL(iconResponse.data); 
+              reader.onload = () => {
+                const response = {
+                  content: (
+                    <MiniWeather
+                      weather={data.weather.main}
+                      icon={<img src={reader.result?.toString()} />}
+                      temp={data.temp}
+                    />
+                  ),
+                  count: data.weather.main.length * 3,
+                };
+
+                markerInfoCache[markerData.label] = {
+                  response,
+                  expires: +new Date() + 1 * 60 * 1000, // cache for 1 minute
+                };
+                
+                resolve(response);
+              };
             })
           }
           // target={mapTarget}
@@ -168,3 +180,63 @@ const HomePage: NextPage = (props) => {
 };
 
 export default HomePage;
+
+/**
+ * MiniWeather Component
+ */
+const MiniWeatherRoot = styled.span`
+  display: flex;
+  align-items: center;
+  text-transform: capitalize;
+
+  > img {
+    display: inline-block;
+    margin: ${toRem(-5)} 0;
+    height: ${toRem(32)};
+    object-fit: contain;
+    filter: invert(1);
+  }
+
+  > span {
+    position: relative;
+    padding: ${toRem(3)} ${toRem(4)} ${toRem(2)};
+    margin: 0 0 0 ${toRem(1)};
+    font-size: ${toRem(11)};
+    line-height: 1;
+
+    &:before {
+      content: '';
+      position: absolute;
+      top: ${toRem(2)};
+      inset-inline-end: ${toRem(11.5)};
+      display: block;
+      width: ${toRem(2)};
+      height: ${toRem(2)};
+      margin-inline-start: ${toRem(3)};
+      border-radius: 50%;
+      border: ${toRem(1)} solid #333;
+    }
+
+    &:after {
+      content: 'c';
+      display: inline-block;
+      margin-inline-start: ${toRem(5)};
+    }
+  }
+`;
+
+const MiniWeather: React.FC<{
+  icon: React.ReactElement,
+  weather: string,
+  temp: number,
+}> = ({
+  icon,
+  weather,
+  temp,
+}) => (
+  <MiniWeatherRoot>
+    {icon}
+    {weather}
+    <span>{temp}</span>
+  </MiniWeatherRoot>
+)

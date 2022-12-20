@@ -36,12 +36,12 @@ const Root = styled('span', {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    padding: ${toRem(2)} ${toRem(12)};
+    padding: ${toRem(0)} ${toRem(12)};
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;
     font-family: Nunito, sans-serif;
-    font-size: ${toRem(11)};
+    font-size: ${toRem(12)};
     font-weight: 600;
     background: transparent;
     border-radius: 50%;
@@ -136,13 +136,6 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
   children,
   ...props
 }) => {
-  const [key, setKey] = React.useState(0);
-
-  const onMouseOver = (e: React.MouseEvent<HTMLSpanElement>) => {
-    setKey(Math.floor(Math.random() * 999));
-    props.onMouseOver?.(e);
-  };
-
   return (
     <Root
       {...props}
@@ -150,7 +143,6 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
       textColor={textColor}
       cloudColor={cloudColor}
       labelStyles={labelStyles}
-      // onMouseOver={onMouseOver}
       className={classnames('cloud-tooltip', props.className)}
     >
       {children}

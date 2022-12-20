@@ -469,7 +469,7 @@ const MarkerRoot = styled('button', {
     position: absolute;
     padding: ${toRem(2)} ${toRem(5)};
     font-family: Nunito, sans-serif;
-    font-size: ${toRem(11)};
+    font-size: ${toRem(12)};
     font-weight: 600;
     white-space: nowrap;
     pointer-events: none;
@@ -497,18 +497,24 @@ const MarkerRoot = styled('button', {
 
   /* Hover */
 
-  &[data-visible="1"]:hover {
-    z-index: 9999999 !important;
+  &[data-visible="1"] {
+    ${mouseDisabled && css`
+      z-index: 9999999 !important; // stay on top on hover and as long as animation is playing
+    `}
 
-    .map-marker__pin {
-      opacity: 1;
-      transform: scale(1.35);
-      transition-timing-function: ${easing.easyBack};
-    }
+    &:hover {
+      z-index: 9999999 !important;
 
-    .map-marker__label {
-      opacity: 1;
-      transform: translate(-50%, 30%) scale(1);
+      .map-marker__pin {
+        opacity: 1;
+        transform: scale(1.35);
+        transition-timing-function: ${easing.easyBack};
+      }
+
+      .map-marker__label {
+        opacity: 1;
+        transform: translate(-50%, 30%) scale(1);
+      }
     }
   }
 
@@ -540,10 +546,10 @@ const MarkerRoot = styled('button', {
         width: ${toRem(12)};
         height: ${toRem(12)};
         border: ${toRem(2)} solid rgba(0, 0, 0, 0.05);
-        border-top-color: rgba(0, 0, 0, 0.15);
+        border-top-color: rgba(0, 0, 0, 0.65);
         border-radius: 50%;
         opacity: ${loading ? 1 : 0};
-        transition: 100ms opacity;
+        transition: ${loading ? 100 : 0}ms opacity linear ${loading ? 300 : 0}ms;
         transform: translate(-50%, -50%);
         animation: 800ms spin both infinite;
 
@@ -571,8 +577,11 @@ const Marker: React.FC<{
   getInfo,
   onMarkerClick,
 }) => {
+  const showMarkerInfoAfter = 500;
+  
   const { id, label } = data;
   const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const infoStatusRef = React.useRef<'active' | 'idle'>('idle');
   const infoAbortControllerRef = React.useRef<AbortController>();
   const [mouseDisabled, setMouseDisabled] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -589,12 +598,19 @@ const Marker: React.FC<{
   };
 
   const handleMouseOver = () => {
+    if (infoStatusRef.current === 'active') return;
+
+    infoStatusRef.current = 'active';
+
     clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
       setLoading(true);
-      getMarkerInfo().then(setInfo).catch(() => null);
-    }, 1000);
+      
+      timeoutRef.current = setTimeout(() => {
+        getMarkerInfo().then(setInfo).catch(() => null);
+      }, 250 + Math.random() * 700);
+    }, showMarkerInfoAfter);
   };
 
   const handleMouseOut = () => {
@@ -609,8 +625,9 @@ const Marker: React.FC<{
       timeoutRef.current = setTimeout(() => {
         setInfo(null);
         setMouseDisabled(false);
+        infoStatusRef.current = 'idle';
       }, 250);
-    }, info ? 250 : 0);
+    }, info ? 150 : 0);
   };
 
   return (
