@@ -29,30 +29,33 @@ const Root = styled('span', {
   labelStyles,
 }) => css`
   position: relative;
+  user-select: none;
 
   > .cloud-tooltip__label {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    padding: ${toRem(8)} ${toRem(12)};
+    padding: ${toRem(2)} ${toRem(12)};
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;
     font-family: Nunito, sans-serif;
     font-size: ${toRem(11)};
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    color: transparent;
+    font-weight: 600;
     background: transparent;
     border-radius: 50%;
     transform: translate(-50%, ${toRem(-offset!)}) scale(0.2, 0.9);
     transform-origin: center bottom;
     transition:
-      color 600ms ${easing.softOut},
       background-color 250ms ${easing.softOut},
       opacity 150ms ${easing.softIn} 50ms,
       transform 350ms ${easing.softIn};
+
+    > span {
+      color: ${textColor};
+      opacity: 0;
+      transition: opacity 600ms ${easing.softOut};
+    }
 
     > i {
       display: block;
@@ -62,8 +65,8 @@ const Root = styled('span', {
       border-radius: 50%;
       animation: 1000ms cloud-tooltip-particle-wobble both infinite linear;
       transition:
-        0ms top ${easing.easyBack},
-        0ms left ${easing.easyBack2};
+        0ms top ${easing.backOut},
+        0ms left ${easing.easyBack};
 
       @keyframes cloud-tooltip-particle-wobble {
         from { transform: rotate(0deg) scaleX(1.1) scaleY(0.9); }
@@ -75,15 +78,19 @@ const Root = styled('span', {
   &:hover {
     > .cloud-tooltip__label {
       opacity: 1;
-      color: ${textColor};
       background: ${cloudColor};
       transform: translate(-50%, ${toRem(-offset!)}) scale(1);
-      transition-delay: 200ms, 250ms, 0ms, 0ms;
+      transition-delay: 250ms, 0ms, 0ms;
       transition-timing-function:
         ${easing.softOut},
-        ${easing.softOut},
-        ${easing.easyBack},
-        ${easing.easyBack};
+        ${easing.backOut},
+        ${easing.backOut};
+
+      > span {
+        opacity: 1;
+        transition-delay: 200ms;
+        transition-timing-function: ${easing.softOut};
+      }
     }
   }
   
@@ -97,7 +104,9 @@ const Root = styled('span', {
   }
 
   > .cloud-tooltip__label {
-    ${labelStyles};
+    > span {
+      ${labelStyles};
+    }
   }
 `);
 
@@ -110,6 +119,7 @@ export interface CloudTooltipProps {
   textColor?: string,
   cloudColor?: string,
   labelStyles?: string | SerializedStyles,
+  count?: number,
 }
 
 export type CloudTooltipCombinedProps = CloudTooltipProps & JSX.IntrinsicElements['span'];
@@ -120,6 +130,7 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
   textColor = '#333',
   cloudColor = '#fff',
   labelStyles = '',
+  count,
   children,
   ...props
 }) => {
@@ -143,11 +154,13 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
       {children}
 
       <span className="cloud-tooltip__label">
-        {label}
+        <span>
+          {label}
+        </span>
 
         {
-          Array.from({ length: Math.max(18, 2.5 * label.length) }).map((char, n) => {
-            const angle = 2 * n * Math.PI / (Math.max(18, 2.5 * label.length));
+          Array.from({ length: Math.max(18, 2.5 * (count ?? label.length)) }).map((char, n) => {
+            const angle = 2 * n * Math.PI / (Math.max(18, 2.5 * (count ?? label.length)));
             const minSize = 6;
             const baseSize = 20;
             const randomizeSizeBy = 8;

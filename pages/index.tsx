@@ -11,19 +11,84 @@ import type { NextPage } from 'next';
  */
 import Layout from '../components/Layout';
 import WorldMap from '../components/WorldMap';
-import { toRem } from '../utils/text';
 import { animate } from '../utils/animation';
+import { toRem } from '../utils/text';
+import * as easing from '../utils/easing';
+import citiesData from '../data/cities.json';
+
+const mapMarkers = citiesData.map((cityData, n) => ({
+  id: n,
+  label: cityData.city,
+  cloudLabel: cityData.country,
+  country: cityData.country,
+  lat: cityData.lat,
+  lon: cityData.lon,
+}));
+
+// const mapMarkers = [
+//   {
+//     id: '1',
+//     label: 'Cairo, Egypt',
+//     lat: 30.040639,
+//     lon: 31.238230,
+//   },
+//   {
+//     id: '2',
+//     label: 'Jerusalem, Palestine',
+//     lat: 31.759729,
+//     lon: 35.212102,
+//   },
+//   {
+//     id: '3',
+//     label: 'Bairut, Lebanon',
+//     lat: 33.893540,
+//     lon: 35.500782,
+//   },
+//   {
+//     id: '4',
+//     cloudLabel: <span>Clear <span style={{ marginLeft: 1, marginRight: 3, background: 'rgba(0, 0, 0, 0.1)', borderRadius: 5, padding: '1px 3px 0' }}>5℃</span></span>,
+//     label: 'Marwa',
+//     lat: 64.463597,
+//     lon: 16.786608,
+//     cloudsCount: 14,
+//   },
+//   {
+//     id: '5',
+//     label: 'Iceland',
+//     lat: 64.810050,
+//     lon: -18.490203,
+//   },
+//   {
+//     id: '6',
+//     label: 'Greenland',
+//     lat: 59.957960,
+//     lon: -43.552618,
+//   },
+// ];
 
 /**
  * Root
  */
 const Root = styled('div', {
-  shouldForwardProp: (prop: PropertyKey) => !([]).includes(prop.toString()),
-})<{}>((props) => css`
+  shouldForwardProp: (prop: PropertyKey) => !([
+    'forecastViewActive',
+  ]).includes(prop.toString()),
+})<{
+  forecastViewActive: boolean,
+}>(({
+  forecastViewActive,
+}) => css`
   #world-map {
-    /* width: 85vw;
-    height: 85vw;
-    margin-left: ${toRem(300)}; */
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + ${toRem(300)}), -50%);
+    transition: 1000ms transform ${easing.snapInOut};
+
+    ${forecastViewActive && css`
+      /* transform: translate(-50%, -50%); */
+    `};
   }
 `);
 
@@ -31,35 +96,46 @@ const Root = styled('div', {
  * HomePage Component
  */
 const HomePage: NextPage = (props) => {
-  const [config, setConfig] = React.useState({
-    interactive: true,
-    autoOrbit: 'off',
-    target: undefined,
-    zoom: 1,
-  });
+  const isSSR = typeof window === 'undefined';
+  const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
+  // const [mapZoom, setMapZoom] = React.useState(0);
+  // const [mapTarget, setMapTarget] = React.useState<{lat: number, lon: number}>();
+
+  React.useEffect(() => {
+    const onWindowResize = () => {
+      setMapSize(0.85 * window.innerWidth);
+    };
+    
+    window.addEventListener('resize', onWindowResize);
+
+    return () => {
+      window.removeEventListener('resize', onWindowResize);
+    };
+  }, []);
+
 
   return (
     <Layout {...props} >
       <Root>
-        <button onClick={() => setConfig(v => ({ ...v, interactive: !v.interactive }))}>Toggle Interactive ({config.interactive ? 'on' : 'off'})</button>
-        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'slow' }))}>AutoOrbit: Slow ({config.autoOrbit})</button>
-        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'fast' }))}>AutoOrbit: Fast ({config.autoOrbit})</button>
-        <button onClick={() => setConfig(v => ({ ...v, autoOrbit: 'off' }))}>AutoOrbit: Off ({config.autoOrbit})</button>
-        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 21.414795, lon: 39.807913, } }))}>Makkah</button>
-        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 30.01, lon: 31.14, } }))}>Target Cairo</button>
-        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 36.42, lon: 3.08, } }))}>Target Algiers</button>
-        <button onClick={() => setConfig(v => ({ ...v, target: { lat: -28.814427, lon: 24.817810, } }))}>Target South Africa</button>
-        <button onClick={() => setConfig(v => ({ ...v, target: { lat: 65.296558, lon: -44.267634, } }))}>Target Greenland</button>
-        <button onClick={() => setConfig(v => ({ ...v, zoom: 10 }))}>Zoom In</button>
-        <button onClick={() => setConfig(v => ({ ...v, zoom: 5 }))}>Zoom midway</button>
-        <button onClick={() => setConfig(v => ({ ...v, zoom: 1 }))}>Zoom Out</button>
-
         <WorldMap
           id="world-map"
-          interactive={config.interactive}
-          autoOrbit={config.autoOrbit}
-          target={config.target}
-          zoom={config.zoom}
+          markers={mapMarkers}
+          markersVisibilityRadius={350}
+          canvasWidth={mapSize}
+          canvasHeight={mapSize}
+          zoom={10}
+          // target={mapTarget}
+          // zoom={mapZoom}
+          // canvasWidth={2000}
+          // onMarkerClick={(marker) => {
+          //   if (mapTarget) {
+          //     setMapTarget(undefined);
+          //     setMapZoom(0);
+          //   } else {
+          //     setMapTarget({ lat: marker.lat, lon: marker.lon });
+          //     setMapZoom(50);
+          //   }
+          // }}
         />
       </Root>
     </Layout>
