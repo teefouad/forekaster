@@ -21,6 +21,7 @@ const Root = styled('span', {
     'textColor',
     'cloudColor',
     'labelStyles',
+    'onMouseOver',
   ]).includes(prop.toString()),
 })<Partial<CloudTooltipCombinedProps>>(({
   offset,
@@ -48,13 +49,13 @@ const Root = styled('span', {
     transform-origin: center bottom;
     transition:
       background-color 250ms ${easing.softOut},
-      opacity 150ms ${easing.softIn} 50ms,
+      opacity 150ms ${easing.softIn} 150ms,
       transform 350ms ${easing.softIn};
 
     > span {
       color: ${textColor};
       opacity: 0;
-      transition: opacity 600ms ${easing.softOut};
+      transition: opacity 200ms ${easing.softOut};
     }
 
     > i {
@@ -88,6 +89,7 @@ const Root = styled('span', {
 
       > span {
         opacity: 1;
+        transition-duration: 500ms;
         transition-delay: 200ms;
         transition-timing-function: ${easing.softOut};
       }
@@ -114,7 +116,7 @@ const Root = styled('span', {
  * CloudTooltip Component
  */
 export interface CloudTooltipProps {
-  label: string,
+  label: React.ReactNode,
   offset?: number,
   textColor?: string,
   cloudColor?: string,
@@ -148,7 +150,7 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
       textColor={textColor}
       cloudColor={cloudColor}
       labelStyles={labelStyles}
-      onMouseOver={onMouseOver}
+      // onMouseOver={onMouseOver}
       className={classnames('cloud-tooltip', props.className)}
     >
       {children}
@@ -159,8 +161,8 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
         </span>
 
         {
-          Array.from({ length: Math.max(18, 2.5 * (count ?? label.length)) }).map((char, n) => {
-            const angle = 2 * n * Math.PI / (Math.max(18, 2.5 * (count ?? label.length)));
+          Array.from({ length: Math.max(18, 2.5 * count!) }).map((char, n) => {
+            const angle = 2 * n * Math.PI / (Math.max(18, 2.5 * count!));
             const minSize = 6;
             const baseSize = 20;
             const randomizeSizeBy = 8;

@@ -124,6 +124,31 @@ const HomePage: NextPage = (props) => {
           canvasWidth={mapSize}
           canvasHeight={mapSize}
           zoom={10}
+          getMarkerInfo={
+            () => new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(
+                  {
+                    content: (
+                      <span>
+                        Clear
+                        <span
+                          style={{
+                            marginLeft: 5,
+                            marginRight: 3,
+                            background: 'rgba(0, 0, 0, 0.1)',
+                            borderRadius: 5,
+                            padding: '1px 3px 0',
+                          }}
+                        >5℃</span>
+                      </span>
+                    ),
+                    count: 10,
+                  }
+                );
+              }, 2000);
+            })
+          }
           // target={mapTarget}
           // zoom={mapZoom}
           // canvasWidth={2000}

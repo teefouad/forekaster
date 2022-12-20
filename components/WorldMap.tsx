@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 import * as Three from 'three';
 
 /**
@@ -99,76 +100,6 @@ const Root = styled.div`
     border-radius: 50%;
     transform: translate(-50%, -50%);
   }
-
-  .map-marker {
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 0;
-    cursor: pointer;
-    outline: none;
-    border: none;
-    background: transparent;
-  }
-  
-  .map-marker__pin {
-    display: block;
-    width: ${toRem(22)};
-    height: ${toRem(22 * 1.33)};
-    margin-left: ${toRem(-22 * 0.5)};
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    background: url(/marker.png) no-repeat 50%;
-    background-size: contain;
-    opacity: 0;
-    transform: scale(0);
-    transform-origin: center bottom;
-    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
-  }
-
-  .map-marker__label {
-    position: absolute;
-    padding: ${toRem(2)} ${toRem(5)};
-    font-family: Nunito, sans-serif;
-    font-size: ${toRem(11)};
-    font-weight: 600;
-    white-space: nowrap;
-    pointer-events: none;
-    user-select: none;
-    opacity: 0;
-    color: #333;
-    background-color: #fff;
-    border-radius: ${toRem(4)};
-    transform: translate(-50%, 50%);
-    transition: opacity 150ms ease-in-out, transform 150ms ${easing.backOut};
-  }
-
-  /* Visible */
-  
-  .map-marker[data-visible="1"] {
-    .map-marker__pin {
-      opacity: 0.8;
-      transform: scale(1);
-    }
-  }
-
-  /* Hover */
-
-  .map-marker[data-visible="1"]:hover {
-    z-index: 9999999 !important;
-
-    .map-marker__pin {
-      opacity: 1;
-      transform: scale(1.35);
-      transition-timing-function: ${easing.easyBack};
-    }
-
-    .map-marker__label {
-      opacity: 1;
-      transform: translate(-50%, 30%) scale(1);
-    }
-  }
 `;
 
 /**
@@ -177,7 +108,6 @@ const Root = styled.div`
 export interface WorldMapProps {
   markers?: Marker[],
   showMarkers?: boolean,
-  markersVisibilityRadius?: number,
   interactive?: boolean,
   autoOrbit?: 'fast' | 'slow' | 'off',
   target?: { lat: number, lon: number },
@@ -188,19 +118,7 @@ export interface WorldMapProps {
   onDragStart?: () => void,
   onDragStop?: () => void,
   onMarkerClick?: (marker: Marker) => void,
-  shouldShowMarker?: ({
-    d,
-    dx,
-    dy,
-    markerPosition,
-    globePosition,
-  }: {
-    d: number,
-    dx: number,
-    dy: number,
-    markerPosition: { x: number, y: number },
-    globePosition: { x: number, y: number },
-  }) => boolean,
+  getMarkerInfo?: (marker: Marker) => Promise<{ content: React.ReactNode, count: number }>,
 }
 
 export type WorldMapCombinedProps = WorldMapProps & JSX.IntrinsicElements['div'];
@@ -208,7 +126,6 @@ export type WorldMapCombinedProps = WorldMapProps & JSX.IntrinsicElements['div']
 const WorldMap: React.FC<WorldMapCombinedProps> = ({
   markers = [],
   showMarkers = true,
-  markersVisibilityRadius = 300,
   interactive = true,
   autoOrbit = false,
   target,
@@ -219,7 +136,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
   onDragStart,
   onDragStop,
   onMarkerClick,
-  shouldShowMarker,
+  getMarkerInfo,
   ...props
 }) => {
   const rootRef = React.useRef(null);
@@ -306,11 +223,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
         markerElement!.style.zIndex = zIndex.toString();
 
         // set marker visibility
-        // const globeProjectedPosition = World3D.helpers.getProjectedPosition(worldRef.current!.globe, worldRef.current!.camera, canvas);
-        // const dx = markerProjectedPosition.x - globeProjectedPosition.x;
-        // const dy = markerProjectedPosition.y - globeProjectedPosition.y;
-        // const d = Math.sqrt(dx * dx + dy * dy);
-
         const rootBbox = root.getBoundingClientRect();
         const bbox = markersVisibilityArea!.getBoundingClientRect();
         const rx = 0.5 * bbox.width;
@@ -478,7 +390,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
   }, [
     markers,
     showMarkers,
-    markersVisibilityRadius,
     interactive,
     autoOrbit,
     zoom,
@@ -487,7 +398,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     canvasHeight,
     onDragStart,
     onDragStop,
-    shouldShowMarker,
   ]);
 
   return (
@@ -501,7 +411,12 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       <div className="markers-container">
         {
           markers.map((marker) => (
-            <Marker key={marker.id} data={marker} onMarkerClick={onMarkerClick} />
+            <Marker
+              key={marker.id}
+              data={marker}
+              onMarkerClick={onMarkerClick}
+              getInfo={getMarkerInfo}
+            />
           ))
         }
       </div>
@@ -509,69 +424,223 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
   );
 };
 
+/**
+ * Marker Component
+ */
+const MarkerRoot = styled('button', {
+  shouldForwardProp: (prop: PropertyKey) => !([
+    'loading',
+    'mouseDisabled',
+  ]).includes(prop.toString()),
+})<{
+  loading: boolean,
+  mouseDisabled: boolean,
+}>(({
+  loading,
+  mouseDisabled,
+}) => css`
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  border: none;
+  background: transparent;
+  pointer-events: ${mouseDisabled ? 'none' : 'auto'};
+  
+  .map-marker__pin {
+    display: block;
+    width: ${toRem(22)};
+    height: ${toRem(22 * 1.33)};
+    margin-left: ${toRem(-22 * 0.5)};
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    background: url(/marker.png) no-repeat 50%;
+    background-size: contain;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center bottom;
+    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
+  }
+
+  .map-marker__label {
+    position: absolute;
+    padding: ${toRem(2)} ${toRem(5)};
+    font-family: Nunito, sans-serif;
+    font-size: ${toRem(11)};
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0;
+    color: #333;
+    background-color: #fff;
+    border-radius: ${toRem(4)};
+    transform: translate(-50%, 50%);
+    transition: opacity 150ms ease-in-out, transform 150ms ${easing.backOut};
+  }
+
+  .cloud-tooltip {
+    z-index: 1;
+  }
+
+  /* Visible */
+  
+  &[data-visible="1"] {
+    .map-marker__pin {
+      opacity: 0.8;
+      transform: scale(1);
+    }
+  }
+
+  /* Hover */
+
+  &[data-visible="1"]:hover {
+    z-index: 9999999 !important;
+
+    .map-marker__pin {
+      opacity: 1;
+      transform: scale(1.35);
+      transition-timing-function: ${easing.easyBack};
+    }
+
+    .map-marker__label {
+      opacity: 1;
+      transform: translate(-50%, 30%) scale(1);
+    }
+  }
+
+  /* Loading */
+
+  .map-marker__loading {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: ${toRem(loading ? 22 : (mouseDisabled ? 12 : 14))};
+    height: ${toRem(loading ? 22 : (mouseDisabled ? 12 : 14))};
+    opacity: ${loading ? 1 : 0};
+    pointer-events: none;
+    background: #fff;
+    border-radius: ${toRem(15)};
+    transform: translate(-50%, calc(${toRem(loading ? -75 : (mouseDisabled ? -28 : -32))}));
+    transition:
+      opacity ${loading ? 100 : 30}ms linear ${loading ? 0 : 200}ms,
+      width ${loading ? 350 : 100}ms ${loading ? easing.swiftBack : 'linear'} ${loading ? 100 : 0}ms,
+      height ${loading ? 450 : 100}ms ${loading ? easing.swiftBack : 'linear'},
+      transform 450ms ${easing.swiftBack};
+
+      &:before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: ${toRem(12)};
+        height: ${toRem(12)};
+        border: ${toRem(2)} solid rgba(0, 0, 0, 0.05);
+        border-top-color: rgba(0, 0, 0, 0.15);
+        border-radius: 50%;
+        opacity: ${loading ? 1 : 0};
+        transition: 100ms opacity;
+        transform: translate(-50%, -50%);
+        animation: 800ms spin both infinite;
+
+        @keyframes spin {
+          from { transform: translate(-50%, -50%) rotate(0); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+      }
+  }
+`);
+
 export interface Marker {
   id: string,
   label: string,
-  cloudLabel?: string,
-  cloudsCount?: number,
   lat: number,
   lon: number,
 }
 
 const Marker: React.FC<{
   data: Marker,
+  getInfo?: (marker: Marker) => Promise<{ content: React.ReactNode, count: number }>,
   onMarkerClick?: (marker: Marker) => void,
 }> = ({
   data,
+  getInfo,
   onMarkerClick,
 }) => {
-  const {
-    id,
-    label,
-    cloudLabel,
-    cloudsCount,
-  } = data;
+  const { id, label } = data;
   const timeoutRef = React.useRef<NodeJS.Timeout>();
-  const [cloudTooltipActive, setCloudTooltipActive] = React.useState(false);
+  const infoAbortControllerRef = React.useRef<AbortController>();
+  const [mouseDisabled, setMouseDisabled] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [info, setInfo] = React.useState<{ content: React.ReactNode, count: number } | null>(null);
+
+  const getMarkerInfo = () => {
+    infoAbortControllerRef.current?.abort();
+    infoAbortControllerRef.current = new AbortController();
+
+    return new Promise<{ content: React.ReactNode, count: number }>((resolve, reject) => {
+      infoAbortControllerRef.current?.signal.addEventListener('abort', reject);
+      getInfo?.(data).then(resolve);
+    });
+  };
 
   const handleMouseOver = () => {
     clearTimeout(timeoutRef.current);
-    
+
     timeoutRef.current = setTimeout(() => {
-      setCloudTooltipActive(true);
-    }, 50);
+      setLoading(true);
+      getMarkerInfo().then(setInfo).catch(() => null);
+    }, 1000);
   };
 
   const handleMouseOut = () => {
+    infoAbortControllerRef.current?.abort();
+
+    setMouseDisabled(true);
     clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
-      setCloudTooltipActive(false);
-    }, 200);
+      setLoading(false);
+
+      timeoutRef.current = setTimeout(() => {
+        setInfo(null);
+        setMouseDisabled(false);
+      }, 250);
+    }, info ? 250 : 0);
   };
 
   return (
-    <button
+    <MarkerRoot
       className="map-marker"
       data-id={id}
-      onMouseOver={handleMouseOver}
-      onMouseOut={handleMouseOut}
+      loading={loading}
+      mouseDisabled={mouseDisabled}
+      onMouseEnter={handleMouseOver}
+      onMouseLeave={handleMouseOut}
       onClick={onMarkerClick?.bind(null, data)}
     >
       {
-        cloudLabel && cloudTooltipActive ? (
-          <CloudTooltip label={cloudLabel} count={cloudsCount ?? label.length} offset={54}>
+        info ? (
+          <CloudTooltip
+            label={info?.content}
+            count={info?.count ?? label.length}
+            offset={54}
+          >
             <span className="map-marker__pin" />
           </CloudTooltip>
-        ) : (
-          <span className="map-marker__pin" />
-        )
+        ) : <span className="map-marker__pin" />
       }
+
+      <span className="map-marker__loading" />
 
       <span className="map-marker__label">
         {label}
       </span>
-    </button>
+    </MarkerRoot>
   );
 };
 
