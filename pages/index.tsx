@@ -94,7 +94,7 @@ const Root = styled('div', {
 
   #app-header {
     position: absolute;
-    top: ${active ? toRem(85) : 'calc(50% - ' + toRem(180) + ')'};
+    top: ${active ? toRem(85) : `calc(50% - 30vh)`};
     inset-inline-start: ${toRem(50)};
   }
 
@@ -265,7 +265,17 @@ const HomePage: NextPage = (props) => {
         <header id="app-header">
           <Link href="/">
             <a id="app-logo">
-              Forekaster
+              <Tooltip
+                label="Go to Homepage"
+                position="center-end"
+                offset={10}
+                autoClose
+                closeDelay={3000}
+              >
+                <span>
+                  Forekaster
+                </span>
+              </Tooltip>
             </a>
           </Link>
 

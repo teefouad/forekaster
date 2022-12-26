@@ -128,6 +128,7 @@ export interface TooltipProps {
   offset?: number | [number, number],
   openDelay?: number,
   closeDelay?: number,
+  autoClose?: boolean,
   tooltipStyles?: SerializedStyles | string,
 }
 
@@ -141,6 +142,7 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
   position = 'top-center',
   openDelay = 1000,
   closeDelay = 0,
+  autoClose = false,
   tooltipStyles,
   ...props
 }) => {
@@ -177,6 +179,11 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
     }
 
     setVisible(true);
+
+    if (autoClose) {
+      clearOpenTimeout();
+      startCloseTimeout();
+    }
   }, openDelay!);
 
   /* close */
