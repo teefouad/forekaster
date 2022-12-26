@@ -19,7 +19,9 @@ import * as easing from '../utils/easing';
  */
 let tooltipRoot: HTMLDivElement;
 
-if (typeof document !== 'undefined') {
+const isSSR = typeof document === 'undefined';
+
+if (!isSSR) {
   tooltipRoot = document.createElement('div');
   tooltipRoot.id = 'wb-tooltip-root';
   document.body.append(tooltipRoot);
@@ -204,6 +206,8 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
       children?.props?.onMouseDown?.(e);
     },
   });
+
+  if (isSSR) return tooltipTarget;
 
   const tooltip = ReactDOM.createPortal(
     <TooltipElement

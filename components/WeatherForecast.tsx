@@ -92,32 +92,8 @@ const Root = styled('div', {
     }
   }
 
-  .city-name {
-    margin: 0;
-    font-size: ${toRem(48)};
-    font-weight: 600;
-    text-transform: capitalize;
-    line-height: 1.4;
-  }
+  
 
-  .today {
-    display: block;
-    font-size: ${toRem(18)};
-    font-weight: 300;
-    animation: weather-forecast-today-appear 350ms ${easing.snapOut} both 200ms;
-
-    @keyframes weather-forecast-today-appear {
-      from {
-        opacity: 0;
-        transform: translate3d(0, 100%, 0);
-      }
-
-      to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-      }
-    }
-  }
 
   .close-button {
     position: absolute;
@@ -570,17 +546,17 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
     )
   }
 
-  if (isLoading) {
-    return (
-      <Root {...props}>
-        <div className="loading">
-          <span>Loading...</span>
-        </div>
-      </Root>
-    )
-  }
+  // if (isLoading) {
+  //   return (
+  //     <Root {...props}>
+  //       <div className="loading">
+  //         <span>Loading...</span>
+  //       </div>
+  //     </Root>
+  //   )
+  // }
 
-  const values = data.forecast.map((d: any) => d.temp);
+  const values = isLoading ? [] : data.forecast.map((d: any) => d.temp);
   const min = Math.min.apply(null, values);
   const max = Math.max.apply(null, values);
   const span = max - min;
@@ -588,7 +564,7 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
   // calculate points data
   const chartPoints = values.map((p: any, i: number) => ({
     x: (i * 100 / values.length) + 50 / values.length,
-    y: Math.max(2, Math.min(98, (100 - ((p - min) * 100 / span)))),
+    y: Math.max(2, Math.min(98, (100 - ((p - min) * 100 / span) || 0))),
   }));
 
   // calculate data for lines connecting the points
@@ -613,18 +589,6 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
   
   return (
     <Root {...props}>
-      <div className="header">
-        <h1 className="city-name">{city}</h1>
-
-        <span className="today">
-          {(new Date()).toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: 'long',
-            weekday: 'long',
-          })}
-        </span>
-      </div>
-      
       <div className="close-button">
         <Tooltip label="Back" target="mouse" position="bottom-end" offset={[10, 5]}>
           <button onClick={onClose}>
@@ -632,87 +596,93 @@ const WeatherForecast: React.FC<WeatherForecastCombinedProps> = ({
           </button>
         </Tooltip>
       </div>
-
+      
       <div className="current-weather weather-card">
         <div className="current-weather__wind weather-card__head">
           <small>Wind</small>
-          <AnimatedNumber initialValue={0} value={+data.weather.wind} delay={400} useIntegers={false} easing="easeOut" />
+          <AnimatedNumber initialValue={0} value={+(data?.weather?.wind ?? 0)} delay={400} useIntegers={false} easing="easeOut" />
           <span>km/h</span>
         </div>
 
         <div className="current-weather__temp temp">
-          <AnimatedNumber initialValue={0} value={data.weather.temp} delay={400} />
+          <AnimatedNumber initialValue={0} value={data?.weather?.temp ?? 0} delay={400} />
         </div>
 
         <div className="current-weather__description weather-card__foot">
-          {data.weather.weather.main}
+          {data?.weather?.weather?.main}
         </div>
       </div>
 
       <div className="forecast-chart">
-        <svg className="forecast-graph" xmlns="http://www.w3.org/2000/svg">
-          {
-            chartPoints.map((point: any, n: number) => (
-              <circle
-                key={`circle-${n}`}
-                className="forecast-graph__point"
-                style={{ animationDelay: `${n * 100}ms` }}
-                cx={`${point.x}%`} 
-                cy={`${point.y}%`} 
-                r="4"
-              />
-            ))
-          }
+        {
+          data && (
+            <svg className="forecast-graph" xmlns="http://www.w3.org/2000/svg">
+              {
+                chartPoints.map((point: any, n: number) => (
+                  <circle
+                    key={`circle-${n}`}
+                    className="forecast-graph__point"
+                    style={{ animationDelay: `${n * 100}ms` }}
+                    cx={`${point.x}%`} 
+                    cy={`${point.y}%`} 
+                    r="4"
+                  />
+                ))
+              }
 
-          {
-            chartLines.map((line: any, n: number) => (
-              <line
-                key={`line-${n}`}
-                className="forecast-graph__line"
-                style={{ animationDelay: `${n * 100}ms` }}
-                x1={`${line.x1}%`}
-                y1={`${line.y1}%`}
-                x2={`${line.x2}%`}
-                y2={`${line.y2}%`}
-              />
-            ))
-          }
-        </svg>
+              {
+                chartLines.map((line: any, n: number) => (
+                  <line
+                    key={`line-${n}`}
+                    className="forecast-graph__line"
+                    style={{ animationDelay: `${n * 100}ms` }}
+                    x1={`${line.x1}%`}
+                    y1={`${line.y1}%`}
+                    x2={`${line.x2}%`}
+                    y2={`${line.y2}%`}
+                  />
+                ))
+              }
+            </svg>
+          )
+        }
 
         <ul className="forecast-data-list">
           {
-            data.forecast.map((weatherForecast: any, n: number) => (
-              <li
-                key={n}
-                className="forecast-data weather-card"
-                style={{ animationDelay: `${n * 50}ms` }}
-              >
-                <Tooltip
-                  label={weatherForecast.weather.description}
-                  target="mouse"
-                  position="top-center"
-                  offset={[0, -10]}
-                  tooltipStyles={css`text-transform: capitalize;`}
+            data && (
+              data.forecast.map((weatherForecast: any, n: number) => (
+                <li
+                  key={n}
+                  className="forecast-data weather-card"
+                  style={{ animationDelay: `${n * 50}ms` }}
                 >
-                  <div>
-                    <div className="forecast-data__time weather-card__head">
-                      {(new Date(weatherForecast.time)).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
+                  <Tooltip
+                    label={weatherForecast.weather.description}
+                    target="mouse"
+                    position="top-center"
+                    offset={[0, -10]}
+                    tooltipStyles={css`text-transform: capitalize;`}
+                  >
+                    <div>
+                      <div className="forecast-data__time weather-card__head">
+                        {(new Date(weatherForecast.time)).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </div>
 
-                    <div className="forecast-data__temp temp">
-                      {weatherForecast.temp}
-                    </div>
+                      <div className="forecast-data__temp temp">
+                        {weatherForecast.temp}
+                      </div>
 
-                    <div className="forecast-data__description weather-card__foot">
-                      {weatherForecast.weather.main}
+                      <div className="forecast-data__description weather-card__foot">
+                        {weatherForecast.weather.main}
+                      </div>
                     </div>
-                  </div>
-                </Tooltip>
-              </li>
-            ))
+                  </Tooltip>
+                </li>
+              ))
+            )
           }
         </ul>
       </div>

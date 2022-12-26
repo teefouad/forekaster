@@ -31,7 +31,7 @@ const api = {
         const response = await fetch(requestURL);
         const json = await response.json();
 
-        if (json.cod !== 200) {
+        if (+json.cod !== 200) {
           return {
             error: 'Failed to load data for this city',
           };

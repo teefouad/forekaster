@@ -26,7 +26,7 @@ export type AnimatedNumberCombinedProps = AnimatedNumberProps & JSX.IntrinsicEle
 const AnimatedNumber: React.FC<AnimatedNumberCombinedProps> = ({
   value,
   initialValue,
-  refreshInterval = 80,
+  refreshInterval = 60,
   easing = 'linear',
   useIntegers = true,
   delay = 0,

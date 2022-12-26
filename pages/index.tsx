@@ -4,25 +4,29 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { css } from '@emotion/react';
-import type { NextPage } from 'next';
 import axios from 'axios';
+import Link from 'next/link';
+import type { NextPage } from 'next';
 
 /**
  * Local imports
  */
 import Layout from '../components/Layout';
-import WorldMap from '../components/WorldMap';
+import WorldMap, { Marker } from '../components/WorldMap';
+import * as colors from '../utils/colors';
 import { animate } from '../utils/animation';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import citiesData from '../data/cities.json';
+import WeatherForecast from '../components/WeatherForecast';
+import CityPicker from '../components/CityPicker';
+import Tooltip from '../components/Tooltip';
 
 const markerInfoCache: any = {};
 
 const mapMarkers = citiesData.map((cityData, n) => ({
-  id: n,
+  id: n.toString(),
   label: cityData.city,
-  cloudLabel: cityData.country,
   country: cityData.country,
   lat: cityData.lat,
   lon: cityData.lon,
@@ -79,20 +83,86 @@ const Root = styled('div', {
 })<{
   forecastViewActive: boolean,
 }>(({
-  forecastViewActive,
+  forecastViewActive: active,
 }) => css`
+  #app-header {
+    position: absolute;
+    top: ${active ? toRem(85) : `calc(50% - ${toRem(180)})`};
+    inset-inline-start: ${toRem(50)};
+  }
+
+  #app-logo {
+    font-size: ${toRem(48)};
+    font-weight: 600;
+    text-decoration: none;
+    outline: none;
+    color: ${colors.TEXT};
+  }
+
+  #app-description {
+    margin: ${toRem(10)} 0 0;
+    max-width: ${toRem(200)};
+    font-size: ${toRem(15)};
+    font-weight: 300;
+    color: ${colors.TEXT_LIGHT};
+  }
+
+  /* #app-logo {
+    position: absolute;
+    top: ${active ? toRem(85) : `calc(50% - ${toRem(180)})`};
+    inset-inline-start: ${toRem(50)};
+    font-size: ${toRem(48)};
+    font-weight: 600;
+    text-decoration: none;
+    outline: none;
+    color: #333;
+    transform: translate(0, -50%) scale(${active ? 0.4 : 1});
+    transform-origin: top left;
+    transition:
+      550ms transform ${easing.snapInOut} ${active ? 120 : 50}ms,
+      550ms top ${easing.snapInOut} ${active ? 0 : 150}ms;
+  }
+
+  .today {
+    position: fixed;
+    top: ${toRem(120)};
+    left: ${toRem(50)};
+    display: block;
+    font-size: ${toRem(18)};
+    font-weight: 300;
+    opacity: ${active ? 1 : 0};
+    transform: translate3d(0, ${active ? 0 : '130%'}, 0);
+    transition:
+      ${active ? 350 : 200}ms opacity ${active ? easing.snapOut : easing.snapIn} 260ms,
+      ${active ? 350 : 200}ms transform ${active ? easing.snapOut : easing.snapIn} 260ms;
+  }
+
+  .city-name {
+    position: fixed;
+    top: ${toRem(145)};
+    left: ${toRem(50)};
+    margin: 0;
+    font-size: ${toRem(48)};
+    font-weight: 600;
+    text-transform: capitalize;
+    line-height: 1.4;
+    opacity: ${active ? 1 : 0};
+    transform: translate3d(0, ${active ? 0 : '50%'}, 0);
+    transition:
+      ${active ? 350 : 200}ms opacity ${active ? easing.snapOut : easing.snapIn} 260ms,
+      ${active ? 350 : 200}ms transform ${active ? easing.snapOut : easing.snapIn} 260ms;
+  }
+
   #world-map {
     display: inline-block;
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(calc(-50% + ${toRem(300)}), -50%);
-    transition: 1000ms transform ${easing.snapInOut};
-
-    ${forecastViewActive && css`
-      /* transform: translate(-50%, -50%); */
-    `};
-  }
+    pointer-events: ${active ? 'none' : 'auto'};
+    opacity: ${active ? 0 : 1};
+    transform: translate(calc(-50% + ${toRem(360)}), -50%);
+    transition: 350ms opacity ${active ? 250 : 0}ms;
+  } */
 `);
 
 /**
@@ -100,9 +170,16 @@ const Root = styled('div', {
  */
 const HomePage: NextPage = (props) => {
   const isSSR = typeof window === 'undefined';
+  const selectedCityRef = React.useRef<Marker | null>(null);
+  const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
   const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
+  const [selectedCity, setSelectedCity] = React.useState<Marker | null>(null);
   // const [mapZoom, setMapZoom] = React.useState(0);
   // const [mapTarget, setMapTarget] = React.useState<{lat: number, lon: number}>();
+
+  const closeForecastView = () => {
+    setSelectedCity(null);
+  };
 
   React.useEffect(() => {
     const onWindowResize = () => {
@@ -118,14 +195,65 @@ const HomePage: NextPage = (props) => {
 
   return (
     <Layout {...props} >
-      <Root>
-        <WorldMap
+      <Root forecastViewActive={Boolean(selectedCity)}>
+        <header id="app-header">
+          <Link href="/">
+            <a id="app-logo">
+              Forekaster
+            </a>
+          </Link>
+
+          <p id="app-description">
+            A neat way to learn about the current weather and forecast.
+          </p>
+        </header>
+
+        {/* <header id="app-header">
+          <Link href="/">
+            <a id="app-logo">
+              Forekaster
+            </a>
+          </Link>
+
+          <span className="today">
+            {(new Date()).toLocaleDateString('en-US', {
+              day: '2-digit',
+              month: 'long',
+              weekday: 'long',
+            })}
+          </span>
+          
+          <h1 className="city-name">
+            {selectedCity?.label ?? selectedCityRef.current?.label}
+          </h1>
+
+          <div className="close-button">
+            <Tooltip label="Back" target="mouse" position="bottom-end" offset={[10, 5]}>
+              <button onClick={closeForecastView}>
+                Close
+              </button>
+            </Tooltip>
+          </div>
+        </header> */}
+
+        {
+          selectedCity && (
+            <WeatherForecast city={selectedCity?.label} />
+          )
+        }
+        
+        
+        {/* <WorldMap
           id="world-map"
           markers={mapMarkers}
-          markersVisibilityRadius={350}
           canvasWidth={mapSize}
           canvasHeight={mapSize}
-          zoom={10}
+          zoom={5}
+          showMarkers={selectedCity || cityPickerOpen ? false : true}
+          onMarkerClick={(marker) => {
+            setSelectedCity(marker);
+            selectedCityRef.current = marker;
+          }}
           getMarkerInfo={
             (markerData) => new Promise(async (resolve) => {
               if (markerInfoCache[markerData.label]) {
@@ -164,16 +292,15 @@ const HomePage: NextPage = (props) => {
           // target={mapTarget}
           // zoom={mapZoom}
           // canvasWidth={2000}
-          // onMarkerClick={(marker) => {
-          //   if (mapTarget) {
-          //     setMapTarget(undefined);
-          //     setMapZoom(0);
-          //   } else {
-          //     setMapTarget({ lat: marker.lat, lon: marker.lon });
-          //     setMapZoom(50);
-          //   }
-          // }}
-        />
+          
+        /> */}
+
+        {/* <CityPicker
+          open={cityPickerOpen}
+          onTriggerClick={() => setCityPickerOpen(true)}
+          onClose={() => setCityPickerOpen(false)}
+          onItemSelect={() => setCityPickerOpen(false)}
+        /> */}
       </Root>
     </Layout>
   );
@@ -194,7 +321,7 @@ const MiniWeatherRoot = styled.span`
     margin: ${toRem(-5)} 0;
     height: ${toRem(32)};
     object-fit: contain;
-    filter: invert(1);
+    filter: contrast(0.5) saturate(2);
   }
 
   > span {

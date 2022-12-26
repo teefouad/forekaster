@@ -241,7 +241,14 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
           && insideVisibilityArea
         );
 
+        // const markerPin = markerElement.querySelector('.map-marker__pin') as HTMLSpanElement;
+        
+        // if (markerPin && markerElement.getAttribute('data-hidden') === '0') {
+        //   // markerPin.style.transitionDelay = showMarkers ? '' : `${Math.floor(Math.random() * 500)}ms`;
+        // }
+
         markerElement.setAttribute('data-visible', isVisible ? '1' : '0');
+        markerElement.setAttribute('data-hidden', showMarkers ? '0' : '1');
       });
     };
 
@@ -383,7 +390,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
       window.removeEventListener('mousemove', dragging);
       window.removeEventListener('touchmove', dragging);
 
-      mapMarkers.forEach((markerPositionHelper, markerElement) => {
+      mapMarkers.forEach((markerPositionHelper) => {
         markerPositionHelper.parent?.parent?.removeFromParent();
       });
     };
@@ -416,6 +423,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
               data={marker}
               onMarkerClick={onMarkerClick}
               getInfo={getMarkerInfo}
+              visible={showMarkers}
             />
           ))
         }
@@ -495,6 +503,18 @@ const MarkerRoot = styled('button', {
     }
   }
 
+  /* Hidden */
+  
+  &[data-hidden="1"] {
+    pointer-events: none;
+    
+    .map-marker__pin {
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 350ms ease-in-out, transform 350ms ${easing.backIn};
+    }
+  }
+
   /* Hover */
 
   &[data-visible="1"] {
@@ -535,7 +555,7 @@ const MarkerRoot = styled('button', {
       opacity ${loading ? 100 : 30}ms linear ${loading ? 0 : 200}ms,
       width ${loading ? 350 : 100}ms ${loading ? easing.swiftBack : 'linear'} ${loading ? 100 : 0}ms,
       height ${loading ? 450 : 100}ms ${loading ? easing.swiftBack : 'linear'},
-      transform 450ms ${easing.swiftBack};
+      transform 450ms ${loading ? easing.swiftBack : easing.snapIn};
 
       &:before {
         content: '';
@@ -564,20 +584,23 @@ const MarkerRoot = styled('button', {
 export interface Marker {
   id: string,
   label: string,
+  country: string,
   lat: number,
   lon: number,
 }
 
 const Marker: React.FC<{
   data: Marker,
+  visible: boolean,
   getInfo?: (marker: Marker) => Promise<{ content: React.ReactNode, count: number }>,
   onMarkerClick?: (marker: Marker) => void,
 }> = ({
   data,
+  visible,
   getInfo,
   onMarkerClick,
 }) => {
-  const showMarkerInfoAfter = 500;
+  const showMarkerInfoAfter = 1000;
   
   const { id, label } = data;
   const timeoutRef = React.useRef<NodeJS.Timeout>();
@@ -608,7 +631,7 @@ const Marker: React.FC<{
       setLoading(true);
       
       timeoutRef.current = setTimeout(() => {
-        getMarkerInfo().then(setInfo).catch(() => null);
+        getMarkerInfo().then(setInfo).catch(() => handleMouseOut());
       }, 250 + Math.random() * 700);
     }, showMarkerInfoAfter);
   };
@@ -629,6 +652,12 @@ const Marker: React.FC<{
       }, 250);
     }, info ? 150 : 0);
   };
+
+  React.useEffect(() => {
+    if (!visible) {
+      handleMouseOut();
+    }
+  }, [visible]);
 
   return (
     <MarkerRoot
