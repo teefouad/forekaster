@@ -21,6 +21,9 @@ import citiesData from '../data/cities.json';
 import WeatherForecast from '../components/WeatherForecast';
 import CityPicker from '../components/CityPicker';
 import Tooltip from '../components/Tooltip';
+import CloudTooltip from '../components/CloudTooltip';
+import Icon from '../components/Icon';
+import SocialLink from '../components/SocialLink';
 
 const markerInfoCache: any = {};
 
@@ -85,9 +88,13 @@ const Root = styled('div', {
 }>(({
   forecastViewActive: active,
 }) => css`
+  /* =================================== */
+  /* APP HEADER
+  /* =================================== */
+
   #app-header {
     position: absolute;
-    top: ${active ? toRem(85) : `calc(50% - ${toRem(180)})`};
+    top: ${active ? toRem(85) : 'calc(50% - ' + toRem(180) + ')'};
     inset-inline-start: ${toRem(50)};
   }
 
@@ -96,7 +103,7 @@ const Root = styled('div', {
     font-weight: 600;
     text-decoration: none;
     outline: none;
-    color: ${colors.TEXT};
+    color: ${colors.TEXT_DARK};
   }
 
   #app-description {
@@ -106,6 +113,65 @@ const Root = styled('div', {
     font-weight: 300;
     color: ${colors.TEXT_LIGHT};
   }
+
+  /* =================================== */
+  /* APP FOOTER
+  /* =================================== */
+
+  #app-footer {
+    position: absolute;
+    bottom: ${toRem(50)};
+    inset-inline-start: ${toRem(50)};
+    display: flex;
+    align-items: center;
+
+    > div {
+      & + div {
+        margin-inline-start: ${toRem(5)};
+      }
+    }
+
+    &:has(div .social-link:hover) {
+      > div {
+        .social-link:not(:hover) {
+          .wb-icon {
+            &:before {
+              color: ${colors.TEXT_LIGHT};
+            }
+          }
+        }
+      }
+    }
+
+    > hr {
+      margin: 0 ${toRem(15)} 0 ${toRem(10)};
+      height: ${toRem(40)};
+      opacity: 0.15;
+      border: none;
+      border-inline-start: ${toRem(1)} dashed #000;
+    }
+
+    > p {
+      display: flex;
+      align-items: center;
+      font-size: ${toRem(11)};
+      font-weight: 500;
+      color: ${colors.TEXT_LIGHT};
+
+      .wb-icon {
+        margin-inline-end: ${toRem(7)};
+
+        &:before {
+          font-size: ${toRem(24)};
+          color: ${colors.TEXT_LIGHT};
+        }
+      }
+    }
+  }
+
+
+
+
 
   /* #app-logo {
     position: absolute;
@@ -169,29 +235,29 @@ const Root = styled('div', {
  * HomePage Component
  */
 const HomePage: NextPage = (props) => {
-  const isSSR = typeof window === 'undefined';
-  const selectedCityRef = React.useRef<Marker | null>(null);
-  const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
-  const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
+  // const isSSR = typeof window === 'undefined';
+  // const selectedCityRef = React.useRef<Marker | null>(null);
+  // const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
+  // const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
   const [selectedCity, setSelectedCity] = React.useState<Marker | null>(null);
   // const [mapZoom, setMapZoom] = React.useState(0);
   // const [mapTarget, setMapTarget] = React.useState<{lat: number, lon: number}>();
 
-  const closeForecastView = () => {
-    setSelectedCity(null);
-  };
+  // const closeForecastView = () => {
+  //   setSelectedCity(null);
+  // };
 
-  React.useEffect(() => {
-    const onWindowResize = () => {
-      setMapSize(0.85 * window.innerWidth);
-    };
+  // React.useEffect(() => {
+  //   const onWindowResize = () => {
+  //     setMapSize(0.85 * window.innerWidth);
+  //   };
     
-    window.addEventListener('resize', onWindowResize);
+  //   window.addEventListener('resize', onWindowResize);
 
-    return () => {
-      window.removeEventListener('resize', onWindowResize);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener('resize', onWindowResize);
+  //   };
+  // }, []);
 
   return (
     <Layout {...props} >
@@ -207,6 +273,27 @@ const HomePage: NextPage = (props) => {
             A neat way to learn about the current weather and forecast.
           </p>
         </header>
+
+        <footer id="app-footer">
+          <SocialLink
+            icon="github"
+            label="GitHub Profile"
+            link="https://github.com/teefouad/"
+          />
+
+          <SocialLink
+            icon="linkedin"
+            label="Let's Connect"
+            link="https://linkedin.com/in/mostafafouad"
+          />
+
+          <hr />
+
+          <p>
+            <Icon name="lab" />
+            Designed / Developed by Mostafa Fouad
+          </p>
+        </footer>
 
         {/* <header id="app-header">
           <Link href="/">

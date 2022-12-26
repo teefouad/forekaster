@@ -17,17 +17,23 @@ import { toRem } from '../utils/text';
  */
 const Root = styled('span', {
   shouldForwardProp: (prop: PropertyKey) => !([
+    'active',
     'offset',
     'textColor',
     'cloudColor',
     'labelStyles',
+    'verticalPadding',
+    'fadeOutDelay',
     'onMouseOver',
   ]).includes(prop.toString()),
-})<Partial<CloudTooltipCombinedProps>>(({
+})<Partial<CloudTooltipCombinedProps & { active: boolean }>>(({
+  active,
   offset,
   textColor,
   cloudColor,
   labelStyles,
+  verticalPadding,
+  fadeOutDelay,
 }) => css`
   position: relative;
   user-select: none;
@@ -36,26 +42,27 @@ const Root = styled('span', {
     position: absolute;
     bottom: 100%;
     left: 50%;
-    padding: ${toRem(0)} ${toRem(12)};
+    padding: ${toRem(verticalPadding!)} ${toRem(12)};
     pointer-events: none;
     white-space: nowrap;
-    opacity: 0;
+    opacity: ${active ? 1 : 0};
     font-family: Nunito, sans-serif;
     font-size: ${toRem(12)};
     font-weight: 600;
-    background: transparent;
+    background: ${active ? cloudColor : 'transparent'};
     border-radius: 50%;
-    transform: translate(-50%, ${toRem(-offset!)}) scale(0.2, 0.9);
+    transform: translate(-50%, ${toRem(-offset!)}) scale(${active ? 1 : '0.2, 0.9'});
     transform-origin: center bottom;
     transition:
-      background-color 250ms ${easing.softOut},
-      opacity 150ms ${easing.softIn} 150ms,
-      transform 350ms ${easing.softIn};
+      background-color 250ms ${easing.softOut} ${active ? 250 : 0}ms,
+      opacity 150ms ${active ? easing.backOut : easing.softIn} ${active ? 0 : fadeOutDelay}ms,
+      transform 350ms ${active ? easing.backOut : easing.softIn};
 
     > span {
       color: ${textColor};
-      opacity: 0;
-      transition: opacity 200ms ${easing.softOut};
+      opacity: ${active ? 1 : 0};
+      transition: opacity ${active ? 500 : 200}ms ${easing.softOut} ${active ? 200 : 0}ms;
+      ${labelStyles};
     }
 
     > i {
@@ -75,41 +82,6 @@ const Root = styled('span', {
       }
     }
   }
-  
-  &:hover {
-    > .cloud-tooltip__label {
-      opacity: 1;
-      background: ${cloudColor};
-      transform: translate(-50%, ${toRem(-offset!)}) scale(1);
-      transition-delay: 250ms, 0ms, 0ms;
-      transition-timing-function:
-        ${easing.softOut},
-        ${easing.backOut},
-        ${easing.backOut};
-
-      > span {
-        opacity: 1;
-        transition-duration: 500ms;
-        transition-delay: 200ms;
-        transition-timing-function: ${easing.softOut};
-      }
-    }
-  }
-  
-  &:not(:hover) {
-    > .cloud-tooltip__label {
-      > i {
-        top: 50% !important;
-        left: 50% !important;
-      }
-    }
-  }
-
-  > .cloud-tooltip__label {
-    > span {
-      ${labelStyles};
-    }
-  }
 `);
 
 /**
@@ -121,7 +93,11 @@ export interface CloudTooltipProps {
   textColor?: string,
   cloudColor?: string,
   labelStyles?: string | SerializedStyles,
+  verticalPadding?: number,
+  fadeOutDelay?: number,
   count?: number,
+  openDelay?: number,
+  closeDelay?: number,
 }
 
 export type CloudTooltipCombinedProps = CloudTooltipProps & JSX.IntrinsicElements['span'];
@@ -132,17 +108,59 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
   textColor = '#333',
   cloudColor = '#fff',
   labelStyles = '',
-  count,
+  verticalPadding = 5,
+  fadeOutDelay = 150,
+  count = 10,
+  openDelay = 1000,
+  closeDelay = 0,
   children,
   ...props
 }) => {
+  const rootRef = React.useRef<HTMLElement>(null);
+  const timeoutRef = React.useRef<any>(null);
+  const [active, setActive] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!rootRef.current) return;
+
+    const root = rootRef.current;
+
+    const onMouseOver = () => {
+      clearTimeout(timeoutRef.current);
+
+      timeoutRef.current = setTimeout(() => {
+        setActive(true);
+      }, openDelay);
+    };
+
+    const onMouseOut = () => {
+      clearTimeout(timeoutRef.current);
+
+      timeoutRef.current = setTimeout(() => {
+        setActive(false);
+      }, closeDelay);
+    };
+
+    root.addEventListener('mouseenter', onMouseOver);
+    root.addEventListener('mouseleave', onMouseOut);
+
+    return () => {
+      root.removeEventListener('mouseenter', onMouseOver);
+      root.removeEventListener('mouseleave', onMouseOut);
+    };
+  }, [openDelay, closeDelay]);
+  
   return (
     <Root
+      ref={rootRef}
       {...props}
+      active={active}
       offset={offset}
       textColor={textColor}
       cloudColor={cloudColor}
       labelStyles={labelStyles}
+      verticalPadding={verticalPadding}
+      fadeOutDelay={fadeOutDelay}
       className={classnames('cloud-tooltip', props.className)}
     >
       {children}
@@ -167,8 +185,8 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
                   width: toRem(size),
                   height: toRem(size),
                   margin: `${toRem(-0.5 * size)} 0 0 ${toRem(-0.5 * size)}`,
-                  left: `calc(50% + ${Math.sin(angle)} * 50% + ${Math.floor(Math.random() * 6 - 3)}%)`,
-                  top: `calc(50% + ${Math.cos(angle)} * 30% + ${Math.floor(Math.random() * 6 - 3)}%)`,
+                  left: !active ? '50%' : `calc(50% + ${Math.sin(angle)} * 50% + ${Math.floor(Math.random() * 6 - 3)}%)`,
+                  top: !active ? '50%' : `calc(50% + ${Math.cos(angle)} * 30% + ${Math.floor(Math.random() * 6 - 3)}%)`,
                   transitionDuration: `${Math.floor(150 + Math.random() * 200)}ms, ${Math.floor(400 - 400 * (Math.cos(angle)) + Math.random() * 200)}ms`,
                   transitionDelay: `${Math.floor(50 + Math.random() * 50)}ms, ${Math.floor(80 + Math.random() * 50)}ms`,
                   animationDuration: `${Math.floor(2500 + Math.random() * 1000)}ms`,
