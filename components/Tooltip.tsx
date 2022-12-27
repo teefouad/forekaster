@@ -206,6 +206,10 @@ const Tooltip: React.FC<TooltipProps & { children: React.ReactElement }> = ({
     onMouseOut: (e: React.MouseEvent<HTMLElement>) => {
       clearOpenTimeout();
       startCloseTimeout();
+      if (autoClose) {
+        clearCloseTimeout();
+        setVisible(false);
+      }
       children?.props?.onMouseOut?.(e);
     },
     onMouseDown: (e: React.MouseEvent<HTMLElement>) => {

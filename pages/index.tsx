@@ -19,7 +19,8 @@ import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import citiesData from '../data/cities.json';
 import WeatherForecast from '../components/WeatherForecast';
-import CityPicker from '../components/CityPicker';
+import CityPicker from '../components/CityPicker.old';
+import WheelMenu from '../components/WheelMenu';
 import Tooltip from '../components/Tooltip';
 import CloudTooltip from '../components/CloudTooltip';
 import Icon from '../components/Icon';
@@ -82,11 +83,14 @@ const mapMarkers = citiesData.map((cityData, n) => ({
 const Root = styled('div', {
   shouldForwardProp: (prop: PropertyKey) => !([
     'forecastViewActive',
+    'cityPickerActive',
   ]).includes(prop.toString()),
 })<{
   forecastViewActive: boolean,
+  cityPickerActive: boolean,
 }>(({
-  forecastViewActive: active,
+  forecastViewActive,
+  cityPickerActive,
 }) => css`
   /* =================================== */
   /* APP HEADER
@@ -94,8 +98,16 @@ const Root = styled('div', {
 
   #app-header {
     position: absolute;
-    top: ${active ? toRem(85) : `calc(50% - 30vh)`};
+    top: calc(50% - 30vh);
     inset-inline-start: ${toRem(50)};
+    transition:
+      300ms opacity linear 300ms,
+      550ms transform ${easing.snapInOut} 500ms;
+
+    ${cityPickerActive && css`
+      opacity: 0.025;
+      transition-delay: 0ms;
+    `}
   }
 
   #app-logo {
@@ -124,6 +136,14 @@ const Root = styled('div', {
     inset-inline-start: ${toRem(50)};
     display: flex;
     align-items: center;
+    transition:
+      300ms opacity linear 300ms,
+      550ms transform ${easing.snapInOut} 500ms;
+
+    ${cityPickerActive && css`
+      opacity: 0.025;
+      transition-delay: 0ms;
+    `}
 
     > div {
       & + div {
@@ -169,24 +189,36 @@ const Root = styled('div', {
     }
   }
 
+  /* =================================== */
+  /* CITY SELECTOR
+  /* =================================== */
+
+  #city-selector {
+    position: absolute;
+    top: 50%;
+    inset-inline-start: ${toRem(50)};
+    z-index: 9999;
+    margin-top: ${toRem(-20)};
+  }
+
 
 
 
 
   /* #app-logo {
     position: absolute;
-    top: ${active ? toRem(85) : `calc(50% - ${toRem(180)})`};
+    top: ${forecastViewActive ? toRem(85) : `calc(50% - ${toRem(180)})`};
     inset-inline-start: ${toRem(50)};
     font-size: ${toRem(48)};
     font-weight: 600;
     text-decoration: none;
     outline: none;
     color: #333;
-    transform: translate(0, -50%) scale(${active ? 0.4 : 1});
+    transform: translate(0, -50%) scale(${forecastViewActive ? 0.4 : 1});
     transform-origin: top left;
     transition:
-      550ms transform ${easing.snapInOut} ${active ? 120 : 50}ms,
-      550ms top ${easing.snapInOut} ${active ? 0 : 150}ms;
+      550ms transform ${easing.snapInOut} ${forecastViewActive ? 120 : 50}ms,
+      550ms top ${easing.snapInOut} ${forecastViewActive ? 0 : 150}ms;
   }
 
   .today {
@@ -196,11 +228,11 @@ const Root = styled('div', {
     display: block;
     font-size: ${toRem(18)};
     font-weight: 300;
-    opacity: ${active ? 1 : 0};
-    transform: translate3d(0, ${active ? 0 : '130%'}, 0);
+    opacity: ${forecastViewActive ? 1 : 0};
+    transform: translate3d(0, ${forecastViewActive ? 0 : '130%'}, 0);
     transition:
-      ${active ? 350 : 200}ms opacity ${active ? easing.snapOut : easing.snapIn} 260ms,
-      ${active ? 350 : 200}ms transform ${active ? easing.snapOut : easing.snapIn} 260ms;
+      ${forecastViewActive ? 350 : 200}ms opacity ${forecastViewActive ? easing.snapOut : easing.snapIn} 260ms,
+      ${forecastViewActive ? 350 : 200}ms transform ${forecastViewActive ? easing.snapOut : easing.snapIn} 260ms;
   }
 
   .city-name {
@@ -212,11 +244,11 @@ const Root = styled('div', {
     font-weight: 600;
     text-transform: capitalize;
     line-height: 1.4;
-    opacity: ${active ? 1 : 0};
-    transform: translate3d(0, ${active ? 0 : '50%'}, 0);
+    opacity: ${forecastViewActive ? 1 : 0};
+    transform: translate3d(0, ${forecastViewActive ? 0 : '50%'}, 0);
     transition:
-      ${active ? 350 : 200}ms opacity ${active ? easing.snapOut : easing.snapIn} 260ms,
-      ${active ? 350 : 200}ms transform ${active ? easing.snapOut : easing.snapIn} 260ms;
+      ${forecastViewActive ? 350 : 200}ms opacity ${forecastViewActive ? easing.snapOut : easing.snapIn} 260ms,
+      ${forecastViewActive ? 350 : 200}ms transform ${forecastViewActive ? easing.snapOut : easing.snapIn} 260ms;
   }
 
   #world-map {
@@ -224,10 +256,10 @@ const Root = styled('div', {
     position: absolute;
     top: 50%;
     left: 50%;
-    pointer-events: ${active ? 'none' : 'auto'};
-    opacity: ${active ? 0 : 1};
+    pointer-events: ${forecastViewActive ? 'none' : 'auto'};
+    opacity: ${forecastViewActive ? 0 : 1};
     transform: translate(calc(-50% + ${toRem(360)}), -50%);
-    transition: 350ms opacity ${active ? 250 : 0}ms;
+    transition: 350ms opacity ${forecastViewActive ? 250 : 0}ms;
   } */
 `);
 
@@ -237,7 +269,7 @@ const Root = styled('div', {
 const HomePage: NextPage = (props) => {
   // const isSSR = typeof window === 'undefined';
   // const selectedCityRef = React.useRef<Marker | null>(null);
-  // const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
+  const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
   // const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
   const [selectedCity, setSelectedCity] = React.useState<Marker | null>(null);
   // const [mapZoom, setMapZoom] = React.useState(0);
@@ -261,7 +293,10 @@ const HomePage: NextPage = (props) => {
 
   return (
     <Layout {...props} >
-      <Root forecastViewActive={Boolean(selectedCity)}>
+      <Root
+        forecastViewActive={Boolean(selectedCity)}
+        cityPickerActive={cityPickerOpen}
+      >
         <header id="app-header">
           <Link href="/">
             <a id="app-logo">
@@ -283,6 +318,15 @@ const HomePage: NextPage = (props) => {
             A neat way to learn about the current weather and forecast.
           </p>
         </header>
+
+        <WheelMenu
+          id="city-selector"
+          data={[]}
+          open={cityPickerOpen}
+          onOpen={() => setCityPickerOpen(true)}
+          onClose={() => setCityPickerOpen(false)}
+          onSelect={() => setCityPickerOpen(false)}
+        />
 
         <footer id="app-footer">
           <SocialLink

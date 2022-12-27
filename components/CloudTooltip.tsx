@@ -119,6 +119,9 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
   const rootRef = React.useRef<HTMLElement>(null);
   const timeoutRef = React.useRef<any>(null);
   const [active, setActive] = React.useState(false);
+  const [readyToRender, setReadyToRender] = React.useState(false);
+
+  React.useEffect(() => setReadyToRender(true), []);
 
   React.useEffect(() => {
     if (!rootRef.current) return;
@@ -149,6 +152,8 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
       root.removeEventListener('mouseleave', onMouseOut);
     };
   }, [openDelay, closeDelay]);
+
+  if (!readyToRender) return null;
   
   return (
     <Root
