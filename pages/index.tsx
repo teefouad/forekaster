@@ -36,6 +36,17 @@ const mapMarkers = citiesData.map((cityData, n) => ({
   lon: cityData.lon,
 }));
 
+const citiesList = citiesData.sort((a, b) => a.city.localeCompare(b.city)).map((cityData, n) => ({
+  value: n.toString(),
+  index: n,
+  label: cityData.city,
+  data: {
+    country: cityData.country,
+    lat: cityData.lat,
+    lon: cityData.lon,
+  },
+}));
+
 // const mapMarkers = [
 //   {
 //     id: '1',
@@ -321,11 +332,12 @@ const HomePage: NextPage = (props) => {
 
         <WheelMenu
           id="city-selector"
-          data={[]}
+          data={citiesList}
+          placeholder="Search for a city..."
           open={cityPickerOpen}
           onOpen={() => setCityPickerOpen(true)}
           onClose={() => setCityPickerOpen(false)}
-          onSelect={() => setCityPickerOpen(false)}
+          // onSelect={() => setCityPickerOpen(false)}
         />
 
         <footer id="app-footer">

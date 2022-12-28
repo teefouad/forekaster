@@ -70,7 +70,7 @@ const Root = styled('div', {
           transition:
             200ms color,
             200ms opacity,
-            0ms background-color linear 1200ms,
+            0ms background-color linear 900ms,
             300ms transform ${easing.swiftBack};
         }
       `}
@@ -100,12 +100,12 @@ const Root = styled('div', {
       ${animationMode === 'in' && css`
         &:after {
           opacity: 1;
-          margin-top: ${toRem(-0.5 * 44 - 47)};
+          margin-top: ${toRem(-0.5 * 44 - 50)};
           transform: scale(0.5);
           transition:
-            100ms opacity linear 1100ms,
-            450ms margin-top ${easing.softBack} 1100ms,
-            450ms transform ${easing.softBack} 1100ms;
+            100ms opacity linear 800ms,
+            400ms margin-top ${easing.softBack} 1200ms,
+            400ms transform ${easing.softBack} 1200ms;
         }
       `}
 

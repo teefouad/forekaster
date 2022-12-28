@@ -151,7 +151,7 @@ const CloudTooltip: React.FC<CloudTooltipCombinedProps> = ({
       root.removeEventListener('mouseenter', onMouseOver);
       root.removeEventListener('mouseleave', onMouseOut);
     };
-  }, [openDelay, closeDelay]);
+  }, [openDelay, closeDelay, readyToRender]);
 
   if (!readyToRender) return null;
   
