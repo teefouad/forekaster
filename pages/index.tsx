@@ -42,6 +42,7 @@ const citiesList = citiesData.sort((a, b) => a.city.localeCompare(b.city)).map((
   label: cityData.city,
   data: {
     country: cityData.country,
+    countryCode: cityData.countryCode,
     lat: cityData.lat,
     lon: cityData.lon,
   },

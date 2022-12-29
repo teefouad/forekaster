@@ -13,6 +13,7 @@ import { animate, raf } from '../utils/animation';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import * as colors from '../utils/colors';
+import Tooltip from './Tooltip';
 
 /**
  * Root
@@ -130,10 +131,12 @@ const Root = styled('div', {
       }
       
       &-inner-ring,
+      &-a-ring,
       &-outer-ring {
         position: absolute;
         top: 50%;
         inset-inline-start: ${wheelRadiusInVH}vh;
+        z-index: 1;
         width: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! + 60)} + ${toRem(open ? 0 : 300)});
         height: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! + 60)} + ${toRem(open ? 0 : 300)});
         pointer-events: none;
@@ -145,6 +148,17 @@ const Root = styled('div', {
           140ms opacity linear ${open ? 300 : 0}ms,
           600ms width ${easing.swiftSnap},
           600ms height ${easing.swiftSnap};
+      }
+
+      &-a-ring {
+        border-width: ${toRem(50)};
+        opacity: ${open ? 0.02 : 0};
+        width: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! - 272)} + ${toRem(open ? 0 : 300)});
+        height: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! - 272)} + ${toRem(open ? 0 : 300)});
+        transition:
+          140ms opacity linear ${open ? 400 : 0}ms,
+          100ms width ${easing.swiftSnap} ${open ? 0 : 100}ms,
+          100ms height ${easing.swiftSnap} ${open ? 0 : 100}ms;
       }
 
       &-outer-ring {
@@ -187,14 +201,29 @@ const Root = styled('div', {
         transition: 200ms opacity ${open ? 500 : 0}ms;
 
         &-index {
-          margin-top: ${toRem(10)};
-          margin-inline-start: ${toRem(15)};
+          margin-top: ${toRem(3)};
           opacity: 0.15;
           font-size: ${toRem(21)};
           font-weight: 700;
+          letter-spacing: -0.05em;
           user-select: none;
           color: ${colors.TEXT};
           transition: 240ms opacity;
+        }
+
+        &-icon {
+          margin-inline-start: ${toRem(24)};
+          margin-inline-end: ${toRem(24)};
+
+          > img {
+            display: block;
+            width: ${toRem(32)};
+            height: ${toRem(32)};
+            object-fit: cover;
+            border-radius: ${toRem(99)};
+            border: ${toRem(3)} solid rgba(0, 0, 0, 0.025);
+            filter: saturate(1.1) brightness(1.1);
+          }
         }
 
         &-label {
@@ -218,6 +247,7 @@ const Root = styled('div', {
           pointer-events: none;
           background: #d9d9d9;
           border-radius: 50%;
+          transform: translateY(${toRem(-4)});
           transition: 240ms background-color;
         }
 
@@ -226,16 +256,26 @@ const Root = styled('div', {
           inset-inline-end: ${toRem(-10)};
           top: 50%;
           height: ${toRem(1)};
-          transform: translateY(${toRem(4)});
           pointer-events: none;
-          border-inline-start: ${toRem(24)} solid ${colors.TEXT};
-          border-inline-end: 0 solid rgba(0, 0, 0, 0.1);
-          animation: 240ms dash-out ${easing.snapInOut} forwards;
+          border-inline-start: 0 solid ${colors.TEXT};
+          border-inline-end: ${toRem(24)} solid rgba(0, 0, 0, 0.1);
+        }
 
-          @keyframes dash-out {
-            to {
-              border-inline-start-width: 0;
-              border-inline-end-width: ${toRem(24)};
+        /* INTERACTIVE */
+
+        &.interactive {
+          .wheel-menu__list-item {
+            &-dash {
+              border-inline-start: ${toRem(24)} solid ${colors.TEXT};
+              border-inline-end: 0 solid rgba(0, 0, 0, 0.1);
+              animation: 240ms dash-out ${easing.snapInOut} both;
+
+              @keyframes dash-out {
+                to {
+                  border-inline-start-width: 0;
+                  border-inline-end-width: ${toRem(24)};
+                }
+              }
             }
           }
         }
@@ -255,7 +295,7 @@ const Root = styled('div', {
             &-dash {
               border-inline-start: ${toRem(24)} solid rgba(0, 0, 0, 0.1);
               border-inline-end: 0 solid ${colors.TEXT};
-              animation: 240ms dash-in ${easing.snapInOut} forwards;
+              animation: 240ms dash-in ${easing.snapInOut} both;
 
               @keyframes dash-in {
                 to {
@@ -448,7 +488,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
   wheelRadiusInVH = 136,
   wheelMenuOffset = 150,
   degreesPerItem = 7,
-  visibilitySpanInDegrees = 80,
+  visibilitySpanInDegrees = 75,
   onOpen,
   onClose,
   onSelect,
@@ -511,7 +551,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
     if (matches.length) {
       if (currentMatchRef.current !== matches[0]) {
-        const targetScrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, matches[0].index * degreesPerItem - 24));
+        const targetScrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, matches[0].index * degreesPerItem - 0.25 * visibilitySpanInDegrees));
   
         animate(scrollDataRef.current, {
           target: {
@@ -543,6 +583,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     data,
     searchQuery,
     degreesPerItem,
+    visibilitySpanInDegrees,
     maxScrollPosition,
   ]);
   
@@ -589,7 +630,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
       wheelRef.current!.style.transform = `
         translateX(${toRem(wheelMenuOffset)})
-        rotate(${scrollDataRef.current.actual + 24}deg)
+        rotate(${scrollDataRef.current.actual + 0.25 * visibilitySpanInDegrees}deg)
       `;
 
       if (visibleItems[0].index !== firstVisibleItemIndex) {
@@ -631,6 +672,8 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
       <div className="wheel-menu__arc">
         <div className="wheel-menu__arc-inner-ring" />
+        <div className="wheel-menu__arc-a-ring" />
+        <div className="wheel-menu__arc-b-ring" />
         <div className="wheel-menu__arc-outer-ring" />
 
         <svg>
@@ -679,10 +722,21 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                   onSelect?.(item);
                   e.preventDefault();
                 }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).classList.add('interactive')}
               >
                 <span className="wheel-menu__list-item-index">
                   #{'0'.repeat(3 - (item.index + 1).toString().length) + (item.index + 1)}
                 </span>
+
+                {
+                  item.data?.country && (
+                    <Tooltip label={item.data?.country}>
+                      <span className="wheel-menu__list-item-icon">
+                        <img src={`/img/flags/${item.data.country.toLowerCase().replace(/\s/g, '-')}.png`} alt="" />
+                      </span>
+                    </Tooltip>
+                  )
+                }
 
                 <span className="wheel-menu__list-item-label">
                   {

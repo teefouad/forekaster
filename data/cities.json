@@ -1,5 +1,6 @@
 [
     {
+        "countryCode": "al",
         "country": "Albania",
         "city": "Tirane",
         "lat": 41.18,
@@ -9,49 +10,57 @@
         "country": "Algeria",
         "city": "Algiers",
         "lat": 36.42,
-        "lon": 3.08
+        "lon": 3.08,
+        "countryCode": "dz"
     },
     {
         "country": "Argentina",
         "city": "Buenos Aires",
         "lat": -36.3,
-        "lon": -60
+        "lon": -60,
+        "countryCode": "ar"
     },
     {
         "country": "Australia",
         "city": "Canberra",
         "lat": -35.15,
-        "lon": 149.08
+        "lon": 149.08,
+        "countryCode": "au"
     },
     {
         "country": "Austria",
         "city": "Vienna",
         "lat": 48.12,
-        "lon": 16.22
+        "lon": 16.22,
+        "countryCode": "at"
     },
     {
         "country": "Azerbaijan",
         "city": "Baku",
         "lat": 40.29,
-        "lon": 49.56
+        "lon": 49.56,
+        "countryCode": "az"
     },
     {
         "country": "Bahrain",
         "city": "Manama",
         "lat": 26.1,
-        "lon": 50.3
+        "lon": 50.3,
+        "countryCode": "bh"
     },
     {
         "country": "Bangladesh",
         "city": "Dhaka",
         "lat": 23.43,
-        "lon": 90.26
+        "lon": 90.26,
+        "countryCode": "bd"
     },
     {
         "country": "Belgium",
         "city": "Brussels",
         "lat": 50.51,
-        "lon": 4.21
+        "lon": 4.21,
+        "countryCode": "be"
     },
     {
         "country": "Bosnia and Herzegovina",
@@ -63,7 +72,8 @@
         "country": "Brazil",
         "city": "Brasilia",
         "lat": -15.47,
-        "lon": -47.55
+        "lon": -47.55,
+        "countryCode": "br"
     },
     {
         "country": "British Virgin Islands",
@@ -75,7 +85,8 @@
         "country": "Bulgaria",
         "city": "Sofia",
         "lat": 42.45,
-        "lon": 23.2
+        "lon": 23.2,
+        "countryCode": "bg"
     },
     {
         "country": "Burkina Faso",
@@ -87,19 +98,22 @@
         "country": "Cambodia",
         "city": "Phnom Penh",
         "lat": 11.33,
-        "lon": 104.55
+        "lon": 104.55,
+        "countryCode": "kh"
     },
     {
         "country": "Cameroon",
         "city": "Yaounde",
         "lat": 3.5,
-        "lon": 11.35
+        "lon": 11.35,
+        "countryCode": "cm"
     },
     {
         "country": "Canada",
         "city": "Ottawa",
         "lat": 45.27,
-        "lon": -75.42
+        "lon": -75.42,
+        "countryCode": "ca"
     },
     {
         "country": "Cayman Islands",
@@ -111,25 +125,29 @@
         "country": "Chad",
         "city": "N'Djamena",
         "lat": 12.1,
-        "lon": 14.59
+        "lon": 14.59,
+        "countryCode": "td"
     },
     {
         "country": "Chile",
         "city": "Santiago",
         "lat": -33.24,
-        "lon": -70.4
+        "lon": -70.4,
+        "countryCode": "cl"
     },
     {
         "country": "China",
         "city": "Beijing",
         "lat": 39.55,
-        "lon": 116.2
+        "lon": 116.2,
+        "countryCode": "cn"
     },
     {
         "country": "Colombia",
         "city": "Bogota",
         "lat": 4.34,
-        "lon": -74
+        "lon": -74,
+        "countryCode": "co"
     },
     {
         "country": "Congo",
@@ -153,19 +171,22 @@
         "country": "Croatia",
         "city": "Zagreb",
         "lat": 45.5,
-        "lon": 15.58
+        "lon": 15.58,
+        "countryCode": "hr"
     },
     {
         "country": "Cuba",
         "city": "Havana",
         "lat": 23.08,
-        "lon": -82.22
+        "lon": -82.22,
+        "countryCode": "cu"
     },
     {
         "country": "Cyprus",
         "city": "Nicosia",
         "lat": 35.1,
-        "lon": 33.25
+        "lon": 33.25,
+        "countryCode": "cy"
     },
     {
         "country": "Czech Republic",
@@ -177,15 +198,18 @@
         "country": "Djibouti",
         "city": "Djibouti",
         "lat": 11.08,
-        "lon": 42.2
+        "lon": 42.2,
+        "countryCode": "dj"
     },
     {
         "country": "Ecuador",
         "city": "Quito",
         "lat": -0.15,
-        "lon": -78.35
+        "lon": -78.35,
+        "countryCode": "ec"
     },
     {
+        "countryCode": "eg",
         "country": "Egypt",
         "city": "Cairo",
         "lat": 30.01,
@@ -201,45 +225,53 @@
         "country": "Eritrea",
         "city": "Asmara",
         "lat": 15.19,
-        "lon": 38.55
+        "lon": 38.55,
+        "countryCode": "er"
     },
     {
         "country": "Estonia",
         "city": "Tallinn",
         "lat": 59.22,
-        "lon": 24.48
+        "lon": 24.48,
+        "countryCode": "ee"
     },
     {
         "country": "Ethiopia",
         "city": "Addis Ababa",
         "lat": 9.02,
-        "lon": 38.42
+        "lon": 38.42,
+        "countryCode": "et"
     },
     {
         "country": "Fiji",
         "city": "Suva",
         "lat": -18.06,
-        "lon": 178.3
+        "lon": 178.3,
+        "countryCode": "fj"
     },
     {
         "country": "Finland",
         "city": "Helsinki",
         "lat": 60.15,
-        "lon": 25.03
+        "lon": 25.03,
+        "countryCode": "fi"
     },
     {
         "country": "France",
         "city": "Paris",
         "lat": 48.5,
-        "lon": 2.2
+        "lon": 2.2,
+        "countryCode": "fr"
     },
     {
         "country": "Gabon",
         "city": "Libreville",
         "lat": 0.25,
-        "lon": 9.26
+        "lon": 9.26,
+        "countryCode": "ga"
     },
     {
+        "countryCode": "de",
         "country": "Germany",
         "city": "Berlin",
         "lat": 52.3,
@@ -249,99 +281,116 @@
         "country": "Ghana",
         "city": "Accra",
         "lat": 5.35,
-        "lon": -0.06
+        "lon": -0.06,
+        "countryCode": "gh"
     },
     {
         "country": "Greece",
         "city": "Athens",
         "lat": 37.58,
-        "lon": 23.46
+        "lon": 23.46,
+        "countryCode": "gr"
     },
     {
         "country": "Greenland",
         "city": "Nuuk",
         "lat": 64.1,
-        "lon": -51.35
+        "lon": -51.35,
+        "countryCode": "gl"
     },
     {
         "country": "Guinea",
         "city": "Conakry",
         "lat": 9.29,
-        "lon": -13.49
+        "lon": -13.49,
+        "countryCode": "gn"
     },
     {
         "country": "Hungary",
         "city": "Budapest",
         "lat": 47.29,
-        "lon": 19.05
+        "lon": 19.05,
+        "countryCode": "hu"
     },
     {
         "country": "Iceland",
         "city": "Reykjavik",
         "lat": 64.1,
-        "lon": -21.57
+        "lon": -21.57,
+        "countryCode": "is"
     },
     {
         "country": "India",
         "city": "New Delhi",
         "lat": 28.37,
-        "lon": 77.13
+        "lon": 77.13,
+        "countryCode": "in"
     },
     {
         "country": "Indonesia",
         "city": "Jakarta",
         "lat": -6.09,
-        "lon": 106.49
+        "lon": 106.49,
+        "countryCode": "id"
     },
     {
         "country": "Iran",
         "city": "Tehran",
         "lat": 35.44,
-        "lon": 51.3
+        "lon": 51.3,
+        "countryCode": "ir"
     },
     {
         "country": "Iraq",
         "city": "Baghdad",
         "lat": 33.2,
-        "lon": 44.3
+        "lon": 44.3,
+        "countryCode": "iq"
     },
     {
         "country": "Ireland",
         "city": "Dublin",
         "lat": 53.21,
-        "lon": -6.15
+        "lon": -6.15,
+        "countryCode": "ie"
     },
     {
         "country": "Italy",
         "city": "Rome",
         "lat": 41.54,
-        "lon": 12.29
+        "lon": 12.29,
+        "countryCode": "it"
     },
     {
         "country": "Jordan",
         "city": "Amman",
         "lat": 31.57,
-        "lon": 35.52
+        "lon": 35.52,
+        "countryCode": "jo"
     },
     {
         "country": "Kazakhstan",
         "city": "Astana",
         "lat": 51.1,
-        "lon": 71.3
+        "lon": 71.3,
+        "countryCode": "kz"
     },
     {
         "country": "Kenya",
         "city": "Nairobi",
         "lat": -1.17,
-        "lon": 36.48
+        "lon": 36.48,
+        "countryCode": "ke"
     },
     {
         "country": "Kuwait",
         "city": "Kuwait",
         "lat": 29.3,
-        "lon": 48
+        "lon": 48,
+        "countryCode": "kw"
     },
     {
+        "countryCode": "lb",
         "country": "Lebanon",
         "city": "Beirut",
         "lat": 33.53,
@@ -351,19 +400,22 @@
         "country": "Libya",
         "city": "Tripoli",
         "lat": 32.49,
-        "lon": 13.07
+        "lon": 13.07,
+        "countryCode": "ly"
     },
     {
         "country": "Lithuania",
         "city": "Vilnius",
         "lat": 54.38,
-        "lon": 25.19
+        "lon": 25.19,
+        "countryCode": "lt"
     },
     {
         "country": "Luxembourg",
         "city": "Luxembourg",
         "lat": 49.37,
-        "lon": 6.09
+        "lon": 6.09,
+        "countryCode": "lu"
     },
     {
         "country": "Macao, China",
@@ -375,73 +427,85 @@
         "country": "Madagascar",
         "city": "Antananarivo",
         "lat": -18.55,
-        "lon": 47.31
+        "lon": 47.31,
+        "countryCode": "mg"
     },
     {
         "country": "Malawi",
         "city": "Lilongwe",
         "lat": -14,
-        "lon": 33.48
+        "lon": 33.48,
+        "countryCode": "mw"
     },
     {
         "country": "Malaysia",
         "city": "Kuala Lumpur",
         "lat": 3.09,
-        "lon": 101.41
+        "lon": 101.41,
+        "countryCode": "my"
     },
     {
         "country": "Maldives",
         "city": "Male",
         "lat": 4,
-        "lon": 73.28
+        "lon": 73.28,
+        "countryCode": "mv"
     },
     {
         "country": "Mali",
         "city": "Bamako",
         "lat": 12.34,
-        "lon": -7.55
+        "lon": -7.55,
+        "countryCode": "ml"
     },
     {
         "country": "Malta",
         "city": "Valletta",
         "lat": 35.54,
-        "lon": 14.31
+        "lon": 14.31,
+        "countryCode": "mt"
     },
     {
         "country": "Mexico",
         "city": "Mexico",
         "lat": 19.2,
-        "lon": -99.1
+        "lon": -99.1,
+        "countryCode": "mx"
     },
     {
         "country": "Mozambique",
         "city": "Maputo",
         "lat": -25.58,
-        "lon": 32.32
+        "lon": 32.32,
+        "countryCode": "mz"
     },
     {
         "country": "Myanmar",
         "city": "Yangon",
         "lat": 16.45,
-        "lon": 96.2
+        "lon": 96.2,
+        "countryCode": "mm"
     },
     {
         "country": "Namibia",
         "city": "Windhoek",
         "lat": -22.35,
-        "lon": 17.04
+        "lon": 17.04,
+        "countryCode": "na"
     },
     {
         "country": "Nepal",
         "city": "Kathmandu",
         "lat": 27.45,
-        "lon": 85.2
+        "lon": 85.2,
+        "countryCode": "np"
     },
     {
         "country": "Netherlands",
         "city": "Amsterdam",
         "lat": 52.23,
-        "lon": 4.54
+        "lon": 4.54,
+        "countryCode": "nl"
     },
     {
         "country": "New Zealand",
@@ -453,13 +517,15 @@
         "country": "Niger",
         "city": "Niamey",
         "lat": 13.27,
-        "lon": 2.06
+        "lon": 2.06,
+        "countryCode": "ne"
     },
     {
         "country": "Nigeria",
         "city": "Abuja",
         "lat": 9.05,
-        "lon": 7.32
+        "lon": 7.32,
+        "countryCode": "ng"
     },
     {
         "country": "North Korea",
@@ -471,61 +537,71 @@
         "country": "Norway",
         "city": "Oslo",
         "lat": 59.55,
-        "lon": 10.45
+        "lon": 10.45,
+        "countryCode": "no"
     },
     {
         "country": "Oman",
         "city": "Masqat",
         "lat": 23.37,
-        "lon": 58.36
+        "lon": 58.36,
+        "countryCode": "om"
     },
     {
         "country": "Pakistan",
         "city": "Islamabad",
         "lat": 33.4,
-        "lon": 73.1
+        "lon": 73.1,
+        "countryCode": "pk"
     },
     {
         "country": "Palau",
         "city": "Koror",
         "lat": 7.2,
-        "lon": 134.28
+        "lon": 134.28,
+        "countryCode": "pw"
     },
     {
         "country": "Panama",
         "city": "Panama",
         "lat": 9,
-        "lon": -79.25
+        "lon": -79.25,
+        "countryCode": "pa"
     },
     {
         "country": "Paraguay",
         "city": "Asuncion",
         "lat": -25.1,
-        "lon": -57.3
+        "lon": -57.3,
+        "countryCode": "py"
     },
     {
         "country": "Peru",
         "city": "Lima",
         "lat": -12,
-        "lon": -77
+        "lon": -77,
+        "countryCode": "pe"
     },
     {
         "country": "Philippines",
         "city": "Manila",
         "lat": 14.4,
-        "lon": 121.03
+        "lon": 121.03,
+        "countryCode": "ph"
     },
     {
         "country": "Poland",
         "city": "Warsaw",
         "lat": 52.13,
-        "lon": 21
+        "lon": 21,
+        "countryCode": "pl"
     },
     {
         "country": "Portugal",
         "city": "Lisbon",
         "lat": 38.42,
-        "lon": -9.1
+        "lon": -9.1,
+        "countryCode": "pt"
     },
     {
         "country": "Puerto Rico",
@@ -537,7 +613,8 @@
         "country": "Qatar",
         "city": "Doha",
         "lat": 25.15,
-        "lon": 51.35
+        "lon": 51.35,
+        "countryCode": "qa"
     },
     {
         "country": "Republic of Korea",
@@ -549,7 +626,8 @@
         "country": "Romania",
         "city": "Bucuresti",
         "lat": 44.27,
-        "lon": 26.1
+        "lon": 26.1,
+        "countryCode": "ro"
     },
     {
         "country": "Russian Federation",
@@ -573,13 +651,15 @@
         "country": "Slovakia",
         "city": "Bratislava",
         "lat": 48.1,
-        "lon": 17.07
+        "lon": 17.07,
+        "countryCode": "sk"
     },
     {
         "country": "Somalia",
         "city": "Mogadishu",
         "lat": 2.02,
-        "lon": 45.25
+        "lon": 45.25,
+        "countryCode": "so"
     },
     {
         "country": "South Africa",
@@ -591,25 +671,29 @@
         "country": "Spain",
         "city": "Madrid",
         "lat": 40.25,
-        "lon": -3.45
+        "lon": -3.45,
+        "countryCode": "es"
     },
     {
         "country": "Sudan",
         "city": "Khartoum",
         "lat": 15.31,
-        "lon": 32.35
+        "lon": 32.35,
+        "countryCode": "sd"
     },
     {
         "country": "Sweden",
         "city": "Stockholm",
         "lat": 59.2,
-        "lon": 18.03
+        "lon": 18.03,
+        "countryCode": "se"
     },
     {
         "country": "Switzerland",
         "city": "Bern",
         "lat": 46.57,
-        "lon": 7.28
+        "lon": 7.28,
+        "countryCode": "ch"
     },
     {
         "country": "Syrian Arab Republic",
@@ -621,43 +705,50 @@
         "country": "Tajikistan",
         "city": "Dushanbe",
         "lat": 38.33,
-        "lon": 68.48
+        "lon": 68.48,
+        "countryCode": "tj"
     },
     {
         "country": "Thailand",
         "city": "Bangkok",
         "lat": 13.45,
-        "lon": 100.35
+        "lon": 100.35,
+        "countryCode": "th"
     },
     {
         "country": "Tunisia",
         "city": "Tunis",
         "lat": 36.5,
-        "lon": 10.11
+        "lon": 10.11,
+        "countryCode": "tn"
     },
     {
         "country": "Turkey",
         "city": "Ankara",
         "lat": 39.57,
-        "lon": 32.54
+        "lon": 32.54,
+        "countryCode": "tr"
     },
     {
         "country": "Turkmenistan",
         "city": "Ashgabat",
         "lat": 38,
-        "lon": 57.5
+        "lon": 57.5,
+        "countryCode": "tm"
     },
     {
         "country": "Uganda",
         "city": "Kampala",
         "lat": 0.2,
-        "lon": 32.3
+        "lon": 32.3,
+        "countryCode": "ug"
     },
     {
         "country": "Ukraine",
         "city": "Kiev",
         "lat": 50.3,
-        "lon": 30.28
+        "lon": 30.28,
+        "countryCode": "ua"
     },
     {
         "country": "United Arab Emirates",
@@ -678,7 +769,7 @@
         "lon": 35.45
     },
     {
-        "country": "United States of America",
+        "country": "USA",
         "city": "Washington DC",
         "lat": 39.91,
         "lon": -77.02
@@ -687,25 +778,29 @@
         "country": "Uruguay",
         "city": "Montevideo",
         "lat": -34.5,
-        "lon": -56.11
+        "lon": -56.11,
+        "countryCode": "uy"
     },
     {
         "country": "Uzbekistan",
         "city": "Tashkent",
         "lat": 41.2,
-        "lon": 69.1
+        "lon": 69.1,
+        "countryCode": "uz"
     },
     {
         "country": "Venezuela",
         "city": "Caracas",
         "lat": 10.3,
-        "lon": -66.55
+        "lon": -66.55,
+        "countryCode": "ve"
     },
     {
         "country": "Vanuatu",
         "city": "Port-Vila",
         "lat": -17.45,
-        "lon": 168.18
+        "lon": 168.18,
+        "countryCode": "vu"
     },
     {
         "country": "Viet Nam",
@@ -723,12 +818,14 @@
         "country": "Zambia",
         "city": "Lusaka",
         "lat": -15.28,
-        "lon": 28.16
+        "lon": 28.16,
+        "countryCode": "zm"
     },
     {
         "country": "Zimbabwe",
         "city": "Harare",
         "lat": -17.43,
-        "lon": 31.02
+        "lon": 31.02,
+        "countryCode": "zw"
     }
 ]
