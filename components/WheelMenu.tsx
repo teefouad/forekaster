@@ -92,6 +92,34 @@ const Root = styled('div', {
             300ms width ${easing.easyBack};
         }
       `}
+
+      > span {
+        position: absolute;
+        top: 50%;
+        inset-inline-end: ${toRem(18)};
+        display: block;
+        width: ${toRem(3)};
+        height: ${toRem(3)};
+        transform: translateY(-50%);
+
+        &:before,
+        &:after {
+          content: '';
+          position: absolute;
+          top: 0;
+          inset-inline-start: 0;
+          display: block;
+          width: 100%;
+          height: 100%;
+          border-top: ${toRem(1)} solid ${colors.TEXT_LIGHT};
+          border-inline-end: ${toRem(1)} solid ${colors.TEXT_LIGHT};
+          transform: translateY(${toRem(-3)}) rotate(-45deg);
+        }
+
+        &:after {
+          transform: translateY(${toRem(3)}) rotate(135deg);
+        }
+      }
     }
 
     /* =================================== */
@@ -131,7 +159,6 @@ const Root = styled('div', {
       }
       
       &-inner-ring,
-      &-a-ring,
       &-outer-ring {
         position: absolute;
         top: 50%;
@@ -148,17 +175,6 @@ const Root = styled('div', {
           140ms opacity linear ${open ? 300 : 0}ms,
           600ms width ${easing.swiftSnap},
           600ms height ${easing.swiftSnap};
-      }
-
-      &-a-ring {
-        border-width: ${toRem(50)};
-        opacity: ${open ? 0.02 : 0};
-        width: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! - 272)} + ${toRem(open ? 0 : 300)});
-        height: calc(${2 * wheelRadiusInVH!}vh - ${toRem(2 * wheelWidth! - 272)} + ${toRem(open ? 0 : 300)});
-        transition:
-          140ms opacity linear ${open ? 400 : 0}ms,
-          100ms width ${easing.swiftSnap} ${open ? 0 : 100}ms,
-          100ms height ${easing.swiftSnap} ${open ? 0 : 100}ms;
       }
 
       &-outer-ring {
@@ -203,37 +219,49 @@ const Root = styled('div', {
         &-index {
           margin-top: ${toRem(3)};
           opacity: 0.15;
-          font-size: ${toRem(21)};
-          font-weight: 700;
+          font-size: ${toRem(24)};
+          font-weight: 600;
           letter-spacing: -0.05em;
           user-select: none;
           color: ${colors.TEXT};
           transition: 240ms opacity;
         }
 
-        &-icon {
-          margin-inline-start: ${toRem(24)};
-          margin-inline-end: ${toRem(24)};
-
-          > img {
-            display: block;
-            width: ${toRem(32)};
-            height: ${toRem(32)};
-            object-fit: cover;
-            border-radius: ${toRem(99)};
-            border: ${toRem(3)} solid rgba(0, 0, 0, 0.025);
-            filter: saturate(1.1) brightness(1.1);
-          }
-        }
-
         &-label {
           display: block;
+          margin-top: ${toRem(-4)};
+          margin-inline-end: ${toRem(20)};
           font-size: ${toRem(34)};
           font-weight: 600;
           letter-spacing: -0.005em;
           white-space: nowrap;
           color: ${colors.MUTED};
-          transition: 240ms color ${easing.snapInOut};
+          transform-origin: top right;
+          transition:
+            240ms color ${easing.snapInOut},
+            240ms transform ${easing.easyBack};
+        }
+
+        &-info {
+          display: flex;
+          position: absolute;
+          bottom: ${toRem(28)};
+          inset-inline-end: ${toRem(100)};
+          opacity: 0;
+          font-size: ${toRem(12)};
+          font-weight: 500;
+          transform: translate(${toRem(-10)}, 0);
+          transition:
+            100ms opacity ${easing.snapInOut},
+            240ms transform ${easing.easyBack};
+
+          > img {
+            display: block;
+            width: ${toRem(13)};
+            height: ${toRem(13)};
+            margin-top: ${toRem(1)};
+            margin-inline-end: ${toRem(4)};
+          }
         }
 
         &-dot {
@@ -286,6 +314,14 @@ const Root = styled('div', {
           .wheel-menu__list-item {
             &-label {
               color: ${colors.TEXT};
+              transform: translateY(${toRem(-5)}) scale(0.75);
+              transition-delay: 0ms, 1000ms;
+            }
+
+            &-info {
+              opacity: 0.75;
+              transform: translate(0, 0);
+              transition-delay: 1000ms;
             }
 
             &-dot {
@@ -433,6 +469,64 @@ const Root = styled('div', {
     }
 
     /* =================================== */
+    /* CLOSE BUTTON
+    /* =================================== */
+    
+    .wheel-menu__close-button {
+      position: absolute;
+      top: 50%;
+      inset-inline-start: ${toRem(70)};
+      z-index: 9;
+      opacity: ${open ? 1 : 0};
+      transform: translateY(-50%) scale(${open ? 1 : 0});
+      transition:
+        200ms opacity linear ${open ? 500 : 100}ms,
+        300ms transform ${open ? easing.easyBack : easing.backIn} ${open ? 400 : 0}ms;
+      
+      button {
+        display: block;
+        width: ${toRem(40)};
+        height: ${toRem(40)};
+        cursor: pointer;
+        font-size: 0;
+        color: transparent;
+        border: ${toRem(1)} solid rgba(0, 0, 0, 0.1);
+        border: none;
+        background: #fff;
+        border-radius: 999px;
+        transform: rotate(${open ? 0 : -180}deg);
+        transition: 500ms transform ${easing.snapInOut} ${open ? 400 : 0}ms;
+
+        &:before,
+        &:after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          display: block;
+          width: ${toRem(14)};
+          height: ${toRem(2)};
+          margin: -${toRem(1)} 0 0 -${toRem(7)};
+          background: ${colors.MUTED};
+          border-radius: 99px;
+          transform: rotate(45deg);
+          transition: 180ms background-color;
+        }
+
+        &:after {
+          transform: rotate(-45deg);
+        }
+        
+        &:hover {
+          &:before,
+          &:after {
+            background: ${colors.TEXT};
+          }
+        }
+      }
+    }
+
+    /* =================================== */
     /* OVERLAY
     /* =================================== */
     
@@ -549,6 +643,8 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
     setMatchingResults(matches);
 
+    setMatchesUI('in');
+
     if (matches.length) {
       if (currentMatchRef.current !== matches[0]) {
         const targetScrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, matches[0].index * degreesPerItem - 0.25 * visibilitySpanInDegrees));
@@ -559,8 +655,6 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
           },
         });
       }
-
-      setMatchesUI('in');
 
       currentMatchRef.current = matches[0];
     }
@@ -576,6 +670,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     }, matches.length ? 1500 : 3000);
 
     return () => {
+      setMatchesUI('out');
       clearTimeout(searchModeTimeout);
     };
   }, [
@@ -668,12 +763,11 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     >
       <button className="wheel-menu__trigger" onClick={onOpen} disabled={disablePointer}>
         {value ?? placeholder}
+        <span />
       </button>
 
       <div className="wheel-menu__arc">
         <div className="wheel-menu__arc-inner-ring" />
-        <div className="wheel-menu__arc-a-ring" />
-        <div className="wheel-menu__arc-b-ring" />
         <div className="wheel-menu__arc-outer-ring" />
 
         <svg>
@@ -728,16 +822,6 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                   #{'0'.repeat(3 - (item.index + 1).toString().length) + (item.index + 1)}
                 </span>
 
-                {
-                  item.data?.country && (
-                    <Tooltip label={item.data?.country}>
-                      <span className="wheel-menu__list-item-icon">
-                        <img src={`/img/flags/${item.data.country.toLowerCase().replace(/\s/g, '-')}.png`} alt="" />
-                      </span>
-                    </Tooltip>
-                  )
-                }
-
                 <span className="wheel-menu__list-item-label">
                   {
                     isMatch ? (
@@ -749,6 +833,11 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                       </>
                     ) : item.label
                   }
+                </span>
+
+                <span className="wheel-menu__list-item-info">
+                  <img src={`/img/flags/${item.data.country.toLowerCase().replace(/\s/g, '-')}.png`} alt="" />
+                  {item.data?.country}
                 </span>
                 
                 <span className="wheel-menu__list-item-dash" />
@@ -767,6 +856,12 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
         <p className={classnames('search-text', { 'no-match': matchingResults.length === 0 })}>
           {searchQuery}
         </p>
+      </div>
+
+      <div className="wheel-menu__close-button">
+        <button onClick={onClose}>
+          Close
+        </button>
       </div>
 
       <div className="wheel-menu__overlay" onClick={onClose} />
