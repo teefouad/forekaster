@@ -32,7 +32,7 @@ class World3D {
     this.renderer = new Three.WebGLRenderer({ canvas, alpha: true, antialias: true });
 
     const globeGeometry = new Three.SphereGeometry(10, 100, 100);
-    const globeTexture = new Three.TextureLoader().load('/world-map.png');
+    const globeTexture = new Three.TextureLoader().load('/img/world-map.svg');
     const globeMaterial = new Three.MeshBasicMaterial({ map: globeTexture, transparent: true });
     
     globeTexture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
@@ -83,7 +83,7 @@ const Root = styled.div`
   .markers-container {
     position: absolute;
     top: 0;
-    left: 0;
+    inset-inline-start: 0;
     width: 100%;
     height: 100%;
   }
@@ -91,9 +91,9 @@ const Root = styled.div`
   .markers-visibility-area {
     position: absolute;
     top: 50%;
-    left: 43%;
-    width: 80%;
-    height: 80%;
+    inset-inline-start: 50%;
+    width: 72%;
+    height: 72%;
     pointer-events: none;
     opacity: 0;
     background: red;
@@ -112,6 +112,7 @@ export interface WorldMapProps {
   autoOrbit?: 'fast' | 'slow' | 'off',
   target?: { lat: number, lon: number },
   zoom?: number,
+  cameraOffsetX?: number,
   dragFriction?: number,
   canvasWidth?: number,
   canvasHeight?: number,
@@ -130,6 +131,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
   autoOrbit = false,
   target,
   zoom = 0,
+  cameraOffsetX = 0,
   dragFriction = 500,
   canvasWidth = 1000,
   canvasHeight = 1000,
@@ -163,6 +165,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     fastOrbiting: false,
   });
 
+  // handle target
   React.useEffect(() => {
     if (!worldRef.current || !target) return;
 
@@ -172,6 +175,7 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     });
   }, [target]);
 
+  // handle zoom
   React.useEffect(() => {
     if (!worldRef.current || Number.isNaN(zoom)) return;
 
@@ -180,10 +184,39 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
     });
   }, [zoom]);
 
+  // handle cameraOffsetX
+  React.useEffect(() => {
+    if (!worldRef.current || Number.isNaN(cameraOffsetX)) return;
+
+    animate(worldRef.current.camera.position, {
+      x: { to: cameraOffsetX },
+    });
+  }, [cameraOffsetX]);
+
+  // handle wheel
+  React.useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (!worldRef.current?.globe || !interactive) return;
+
+      worldRef.current.globe.rotation.x -= 0.0015 * e.deltaY;
+      worldRef.current.globe.rotation.y -= 0.0015 * e.deltaX;
+
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    
+    window.addEventListener('wheel', onWheel, { passive: false });
+    
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+    };
+  }, [interactive]);
+
+  // handle update
   React.useEffect(() => {
     const root = rootRef.current! as HTMLDivElement;
     const canvas = root.querySelector('canvas') as HTMLCanvasElement;
-    const markersVisibilityArea = root.querySelector('.markers-visibility-area');
+    const markersVisibilityArea = root.querySelector('.markers-visibility-area')! as HTMLDivElement;
 
     worldRef.current = worldRef.current ?? new World3D(canvas, zoom);
 
@@ -240,12 +273,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
           && markerProjectedPosition.worldPosition.z > 0
           && insideVisibilityArea
         );
-
-        // const markerPin = markerElement.querySelector('.map-marker__pin') as HTMLSpanElement;
-        
-        // if (markerPin && markerElement.getAttribute('data-hidden') === '0') {
-        //   // markerPin.style.transitionDelay = showMarkers ? '' : `${Math.floor(Math.random() * 500)}ms`;
-        // }
 
         markerElement.setAttribute('data-visible', isVisible ? '1' : '0');
         markerElement.setAttribute('data-hidden', showMarkers ? '0' : '1');
@@ -413,8 +440,6 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
         <canvas width={300} height={150} />
       </div>
 
-      <div className="markers-visibility-area" />
-
       <div className="markers-container">
         {
           markers.map((marker) => (
@@ -428,13 +453,16 @@ const WorldMap: React.FC<WorldMapCombinedProps> = ({
           ))
         }
       </div>
+
+      <div className="markers-visibility-area" />
     </Root>
   );
 };
 
-/**
- * Marker Component
- */
+/* =========================================================================== */
+/* Marker Component
+/* =========================================================================== */
+
 const MarkerRoot = styled('button', {
   shouldForwardProp: (prop: PropertyKey) => !([
     'loading',
@@ -555,7 +583,7 @@ const MarkerRoot = styled('button', {
       opacity ${loading ? 100 : 30}ms linear ${loading ? 0 : 200}ms,
       width ${loading ? 350 : 100}ms ${loading ? easing.swiftBack : 'linear'} ${loading ? 100 : 0}ms,
       height ${loading ? 450 : 100}ms ${loading ? easing.swiftBack : 'linear'},
-      transform 450ms ${loading ? easing.swiftBack : easing.snapIn};
+      transform 450ms ${loading ? easing.swiftBack : easing.snapInOut};
 
       &:before {
         content: '';

@@ -13,7 +13,6 @@ import { animate, raf } from '../utils/animation';
 import { toRem } from '../utils/text';
 import * as easing from '../utils/easing';
 import * as colors from '../utils/colors';
-import Tooltip from './Tooltip';
 
 /**
  * Root
@@ -29,6 +28,7 @@ const Root = styled('div', {
     'disablePointer',
     'matchesUI',
     'searchQuery',
+    'selectedItem',
   ]).includes(prop.toString()),
 })<Partial<WheelMenuCombinedProps & {
   disablePointer: boolean,
@@ -44,6 +44,7 @@ const Root = styled('div', {
   disablePointer,
   matchesUI,
   searchQuery,
+  selectedItem,
 }) => {
   const L = 0.5;
   const circum = `2 * ${Math.PI} * ${wheelRadiusInVH}vh`;
@@ -220,18 +221,21 @@ const Root = styled('div', {
           margin-top: ${toRem(3)};
           opacity: 0.15;
           font-size: ${toRem(24)};
-          font-weight: 600;
+          font-weight: 300;
           letter-spacing: -0.05em;
           user-select: none;
           color: ${colors.TEXT};
-          transition: 240ms opacity;
+          transform-origin: right center;
+          transition:
+            240ms opacity,
+            240ms transform ${easing.easyBack};
         }
 
         &-label {
           display: block;
           margin-top: ${toRem(-4)};
           margin-inline-end: ${toRem(20)};
-          font-size: ${toRem(34)};
+          font-size: ${toRem(32)};
           font-weight: 600;
           letter-spacing: -0.005em;
           white-space: nowrap;
@@ -245,11 +249,11 @@ const Root = styled('div', {
         &-info {
           display: flex;
           position: absolute;
-          bottom: ${toRem(28)};
-          inset-inline-end: ${toRem(100)};
+          bottom: ${toRem(24)};
+          inset-inline-end: ${toRem(97)};
           opacity: 0;
-          font-size: ${toRem(12)};
-          font-weight: 500;
+          font-size: ${toRem(13)};
+          font-weight: 600;
           transform: translate(${toRem(-10)}, 0);
           transition:
             100ms opacity ${easing.snapInOut},
@@ -257,10 +261,12 @@ const Root = styled('div', {
 
           > img {
             display: block;
-            width: ${toRem(13)};
-            height: ${toRem(13)};
-            margin-top: ${toRem(1)};
-            margin-inline-end: ${toRem(4)};
+            width: ${toRem(18)};
+            height: ${toRem(18)};
+            margin-inline-start: ${toRem(6)};
+            border: ${toRem(2)} solid rgba(0, 0, 0, 0.075);
+            border-radius: 50%;
+            filter: brightness(1.05) saturate(1.05);
           }
         }
 
@@ -276,7 +282,9 @@ const Root = styled('div', {
           background: #d9d9d9;
           border-radius: 50%;
           transform: translateY(${toRem(-4)});
-          transition: 240ms background-color;
+          transition:
+            240ms background-color,
+            240ms transform ${easing.backOut};
         }
 
         &-dash {
@@ -291,12 +299,12 @@ const Root = styled('div', {
 
         /* INTERACTIVE */
 
-        &.interactive {
+        &.interactive:not(.is-selected) {
           .wheel-menu__list-item {
             &-dash {
               border-inline-start: ${toRem(24)} solid ${colors.TEXT};
               border-inline-end: 0 solid rgba(0, 0, 0, 0.1);
-              animation: 240ms dash-out ${easing.snapInOut} both;
+              animation: 120ms dash-out ${easing.snapInOut} both;
 
               @keyframes dash-out {
                 to {
@@ -310,28 +318,20 @@ const Root = styled('div', {
 
         /* HOVER */
 
-        &:hover {
+        &:hover:not(.is-selected) {
           .wheel-menu__list-item {
             &-label {
               color: ${colors.TEXT};
-              transform: translateY(${toRem(-5)}) scale(0.75);
-              transition-delay: 0ms, 1000ms;
             }
-
-            &-info {
-              opacity: 0.75;
-              transform: translate(0, 0);
-              transition-delay: 1000ms;
-            }
-
+          
             &-dot {
               background: ${colors.TEXT};
             }
-
+            
             &-dash {
               border-inline-start: ${toRem(24)} solid rgba(0, 0, 0, 0.1);
               border-inline-end: 0 solid ${colors.TEXT};
-              animation: 240ms dash-in ${easing.snapInOut} both;
+              animation: 120ms dash-in linear both;
 
               @keyframes dash-in {
                 to {
@@ -339,6 +339,37 @@ const Root = styled('div', {
                   border-inline-end-width: ${toRem(24)};
                 }
               }
+            }
+          }
+        }
+
+        /* SELECTED */
+        
+        &.is-selected {
+          .wheel-menu__list-item {
+            &-label {
+              color: ${colors.TEXT};
+              transform: translate(${toRem(-30)}, ${toRem(-5)}) scale(0.75);
+            }
+          
+            &-index {
+              font-weight: 200;
+              transform: scale(1.6);
+            }
+          
+            &-info {
+              opacity: 0.75;
+              transform: translate(${toRem(-30)}, ${toRem(-5)});
+            }
+
+            &-dot {
+              background: ${colors.TEXT};
+              transform: translateY(${toRem(-4)}) scale(1.6);
+            }
+            
+            &-dash {
+              border-inline-start-width: ${toRem(24)};
+              border-inline-end-width: 0;
             }
           }
         }
@@ -398,40 +429,102 @@ const Root = styled('div', {
     .wheel-menu__help-text {
       position: absolute;
       top: 50%;
-      inset-inline-start: ${toRem(wheelWidth! + wheelMenuOffset! + 125)};
-      margin: ${toRem(4)} 0 0;
+      inset-inline-start: ${toRem(wheelWidth! + wheelMenuOffset! + 100)};
+      margin: 0;
       pointer-events: none;
       user-select: none;
-      color: ${open ? colors.MUTED : 'transparent'};
+      opacity: ${open ? 1 : 0};
+      color: ${selectedItem ? colors.TEXT : colors.MUTED};
       transform: translate(${toRem(open ? 0 : -wheelMenuOffset!)}, -50%);
       transition: 
-        400ms color ${easing.snapInOut} ${open ? 580 : 0}ms,
+        200ms color,
+        400ms opacity ${easing.snapInOut} ${open ? 580 : 0}ms,
         600ms transform ${easing.snapInOut} ${open ? 50 : 0}ms;
 
       &:before {
         content: '';
         position: absolute;
         top: 50%;
-        inset-inline-start: ${toRem(-70)};
+        inset-inline-start: ${toRem(-50)};
         display: block;
-        width: ${toRem(open ? 50 : 0)};
         height: ${toRem(1)};
-        background: rgba(0, 0, 0, 0.1);
-        transition: 200ms width ${easing.snapInOut} ${open ? 500 : 0}ms;
+        pointer-events: none;
+        border-inline-start: ${toRem(30)} solid ${colors.TEXT};
+        border-inline-end: 0 solid rgba(0, 0, 0, 0.1);
+        animation: 200ms placeholder-dash-out ${easing.snapInOut} both;
+
+        @keyframes placeholder-dash-out {
+          to {
+            border-inline-start-width: 0;
+            border-inline-end-width: ${toRem(30)};
+          }
+        }
+
+        ${selectedItem && css`
+          border-inline-start: ${toRem(30)} solid rgba(0, 0, 0, 0.1);
+          border-inline-end: 0 solid ${colors.TEXT};
+          animation: 120ms placeholder-dash-in linear both;
+
+          @keyframes placeholder-dash-in {
+            to {
+              border-inline-start-width: 0;
+              border-inline-end-width: ${toRem(30)};
+            }
+          }
+        `};
       }
-      
+
       > p {
         position: absolute;
-        transform: translate(0, -50%);
+        display: flex;
+        align-items: end;
         margin: 0;
-        font-size: ${toRem(16)};
-        font-style: italic;
-        font-weight: 200;
+        font-size: ${toRem(14)};
+        font-weight: 300;
         white-space: nowrap;
+        padding: ${toRem(10)} ${toRem(13)};
+        background: #fff;
+        border-radius: ${toRem(8)};
+        transform: translate(0, -50%);
 
         &.placeholder-text {
           opacity: ${!open || searchQuery ? 0 : 1};
+          color: transparent;
           transition: 300ms opacity;
+          animation: 300ms placeholder-${selectedItem ? 'selected' : 'default'}-fade-in linear forwards;
+
+          @keyframes placeholder-default-fade-in {
+            to { color: ${colors.MUTED}; }
+          }
+
+          @keyframes placeholder-selected-fade-in {
+            to { color: ${colors.TEXT}; }
+          }
+
+          &:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            inset-inline-start: 0;
+            z-index: -1;
+            display: block;
+            width: ${toRem(28)};
+            height: ${toRem(28)};
+            background: #fff;
+            border-radius: ${toRem(8)} ${toRem(8)} ${toRem(8)} ${toRem(4)};
+            transform: scaleX(${selectedItem ? 0.8 : 0}) translateX(${toRem(2)}) translate(-50%, -50%) rotate(45deg);
+            transition: 200ms transform ${easing.snapInOut};
+          }
+          
+          small {
+            margin-inline-start: ${toRem(5)};
+            font-size: ${toRem(14)};
+          }
+          
+          strong {
+            margin-inline-start: ${toRem(5)};
+            font-weight: 600;
+          }
         }
 
         &.search-text {
@@ -445,10 +538,9 @@ const Root = styled('div', {
             content: '';
             display: ${searchQuery ? 'block' : 'none'};
             width: ${toRem(4)};
-            height: ${toRem(16)};
+            height: ${toRem(21)};
             margin-inline-start: ${toRem(2)};
-            background: ${colors.MUTED};
-            transform: skewX(-8deg);
+            background: ${colors.TEXT};
             animation: 700ms blink infinite;
 
             @keyframes blink {
@@ -458,10 +550,10 @@ const Root = styled('div', {
           }
 
           &.no-match {
-            color: #fd4949;
+            color: #f56d6d;
 
             &:after {
-              background: #fd4949;
+              background: #f56d6d;
             }
           }
         }
@@ -475,7 +567,7 @@ const Root = styled('div', {
     .wheel-menu__close-button {
       position: absolute;
       top: 50%;
-      inset-inline-start: ${toRem(70)};
+      inset-inline-start: ${toRem(wheelMenuOffset! - 80)};
       z-index: 9;
       opacity: ${open ? 1 : 0};
       transform: translateY(-50%) scale(${open ? 1 : 0});
@@ -518,26 +610,17 @@ const Root = styled('div', {
         }
         
         &:hover {
+          ${open && css`
+            transform: scale(1.2) rotate(${open ? 0 : -180}deg);
+            transition: 240ms transform ${easing.easyBack};
+          `};
+
           &:before,
           &:after {
             background: ${colors.TEXT};
           }
         }
       }
-    }
-
-    /* =================================== */
-    /* OVERLAY
-    /* =================================== */
-    
-    .wheel-menu__overlay {
-      position: fixed;
-      top: 0;
-      inset-inline-start: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      pointer-events: ${open ? 'auto' : 'none'};
     }
   `;
 });
@@ -549,7 +632,8 @@ export interface WheelMenuProps {
   data: WheelMenuItem[],
   value?: string,
   open?: boolean,
-  placeholder?: string,
+  triggerPlaceholder?: React.ReactNode,
+  wheelPlaceholder?: React.ReactNode,
   menuWidth?: number,
   menuHeight?: number,
   wheelWidth?: number,
@@ -557,9 +641,14 @@ export interface WheelMenuProps {
   wheelMenuOffset?: number,
   degreesPerItem?: number,
   visibilitySpanInDegrees?: number,
+  highlightTimeout?: number,
+  selectedItem?: WheelMenuItem,
   onOpen?: () => void,
   onClose?: () => void,
+  onScroll?: (e: WheelEvent) => void,
   onSelect?: (item: WheelMenuItem) => void,
+  onMouseStay?: (item: WheelMenuItem) => void,
+  onMouseLeave?: (item: WheelMenuItem) => void,
 }
 
 export interface WheelMenuItem {
@@ -575,23 +664,61 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
   data,
   value,
   open,
-  placeholder = 'Select an item...',
+  triggerPlaceholder = 'Select an item...',
+  wheelPlaceholder = 'Select an item...',
   menuWidth = 200,
   menuHeight = 40,
   wheelWidth = 440,
   wheelRadiusInVH = 136,
-  wheelMenuOffset = 150,
+  wheelMenuOffset = 70,
   degreesPerItem = 7,
   visibilitySpanInDegrees = 75,
+  highlightTimeout = 1200,
+  selectedItem,
   onOpen,
   onClose,
+  onScroll,
   onSelect,
+  onMouseStay,
+  onMouseLeave,
   ...props
 }) => {
-  const minScrollPosition = 0;
-  const maxScrollPosition = data.length * degreesPerItem - visibilitySpanInDegrees + 30;
+  const minScrollPosition = -0.25 * visibilitySpanInDegrees;
+  const maxScrollPosition = (data.length - 1) * degreesPerItem - 0.25 * visibilitySpanInDegrees;
 
   const wheelRef = React.useRef<HTMLDivElement>(null);
+
+  // selected item
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (item: WheelMenuItem, e: React.MouseEvent<HTMLButtonElement>) => {
+    (e.target as HTMLButtonElement).classList.add('interactive');
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      onMouseStay?.(item);
+    }, highlightTimeout);
+  };
+
+  const handleMouseLeave = (item: WheelMenuItem) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    onMouseLeave?.(item);
+  };
+
+  const scrollToItem = (item: WheelMenuItem) => {
+    animate(scrollDataRef.current, {
+      target: {
+        to: item.index * degreesPerItem - 0.25 * visibilitySpanInDegrees,
+      },
+    });
+  };
+
+  const selectItem = (item: WheelMenuItem) => {
+    currentMatchRef.current = null;
+    scrollToItem(item);
+    onSelect?.(item);
+  };
 
   // enable/disable pointer while animation is off/on
   const [disablePointer, setDisablePointer] = React.useState(false);
@@ -621,6 +748,13 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     if (!open) return;
 
     const onSearch = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        if (matchingResults.length) {
+          selectItem(matchingResults[0]);
+          setSearchQuery('');
+          e.preventDefault();
+        }
+      } else
       if (e.key === 'Backspace') {
         setSearchQuery(v => e.metaKey ? '' : v.slice(0, v.length - 1));
       } else
@@ -634,10 +768,10 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     return () => {
       window.removeEventListener('keydown', onSearch);
     };
-  }, [open]);
+  }, [open, onSelect, matchingResults]);
 
   React.useEffect(() => {
-    if (!open || !searchQuery) return;
+    if (!open || !searchQuery || searchQuery.length < 2) return;
 
     const matches = data.filter((item) => item.label.toLowerCase().startsWith(searchQuery.toLowerCase()));
 
@@ -646,7 +780,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     setMatchesUI('in');
 
     if (matches.length) {
-      if (currentMatchRef.current !== matches[0]) {
+      if (currentMatchRef.current?.value !== matches[0].value) {
         const targetScrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, matches[0].index * degreesPerItem - 0.25 * visibilitySpanInDegrees));
   
         animate(scrollDataRef.current, {
@@ -666,6 +800,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
         setSearchQuery('');
         setMatchingResults([]);
         currentMatchRef.current = null;
+        if (selectedItem) scrollToItem(selectedItem);
       }, 300); // allow match ui animation to end in 300ms
     }, matches.length ? 1500 : 3000);
 
@@ -677,6 +812,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     open,
     data,
     searchQuery,
+    selectedItem,
     degreesPerItem,
     visibilitySpanInDegrees,
     maxScrollPosition,
@@ -706,11 +842,12 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
   React.useEffect(() => {
     if (!open) return;
 
-    const onScroll = (e: WheelEvent) => {
+    const handleScroll = (e: WheelEvent) => {
       scrollDataRef.current.target += 0.025 * e.deltaY;
+      onScroll?.(e);
     };
     
-    window.addEventListener('wheel', onScroll);
+    window.addEventListener('wheel', handleScroll);
 
     const cancelFrame = raf(() => {
       // cap scroll position
@@ -719,8 +856,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
       // calculate visible items
       const itemsBuffer = 2; // use 2 items as buffer
-      const scrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, scrollDataRef.current.actual));
-      const firstVisibleItemIndex = Math.max(0, Math.floor(scrollPosition / degreesPerItem) - itemsBuffer);
+      const firstVisibleItemIndex = Math.max(0, Math.floor(scrollDataRef.current.actual / degreesPerItem) - itemsBuffer);
       const numberOfVisibleItems = firstVisibleItemIndex + Math.floor(visibilitySpanInDegrees / degreesPerItem) + 1 + itemsBuffer;
 
       wheelRef.current!.style.transform = `
@@ -735,7 +871,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
     return () => {
       cancelFrame();
-      window.removeEventListener('wheel', onScroll);
+      window.removeEventListener('wheel', handleScroll);
     };
   }, [
     open,
@@ -746,6 +882,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     visibleItems,
     setVisibleItems,
     maxScrollPosition,
+    onScroll,
   ]);
   
   return (
@@ -757,12 +894,13 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
       wheelWidth={wheelWidth}
       wheelRadiusInVH={wheelRadiusInVH}
       wheelMenuOffset={wheelMenuOffset}
+      selectedItem={selectedItem}
       disablePointer={disablePointer}
       matchesUI={matchesUI}
       searchQuery={searchQuery}
     >
       <button className="wheel-menu__trigger" onClick={onOpen} disabled={disablePointer}>
-        {value ?? placeholder}
+        {value ?? triggerPlaceholder}
         <span />
       </button>
 
@@ -802,6 +940,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                 key={item.index}
                 tabIndex={-1}
                 className={classnames('wheel-menu__list-item', {
+                  'is-selected': selectedItem?.value === item.value,
                   'is-match': isMatch,
                   'in': isMatch && matchesUI === 'in',
                   'out': isMatch && matchesUI === 'out',
@@ -813,10 +952,11 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                   `,
                 }}
                 onClick={(e) => {
-                  onSelect?.(item);
+                  selectItem(item);
                   e.preventDefault();
                 }}
-                onMouseEnter={(e) => (e.target as HTMLButtonElement).classList.add('interactive')}
+                onMouseEnter={e => handleMouseEnter(item, e)}
+                onMouseLeave={() => handleMouseLeave(item)}
               >
                 <span className="wheel-menu__list-item-index">
                   #{'0'.repeat(3 - (item.index + 1).toString().length) + (item.index + 1)}
@@ -836,8 +976,8 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
                 </span>
 
                 <span className="wheel-menu__list-item-info">
-                  <img src={`/img/flags/${item.data.country.toLowerCase().replace(/\s/g, '-')}.png`} alt="" />
                   {item.data?.country}
+                  <img src={`/img/flags/${item.data.country.toLowerCase().replace(/\s/g, '-')}.png`} alt="" />
                 </span>
                 
                 <span className="wheel-menu__list-item-dash" />
@@ -850,7 +990,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
       <div className="wheel-menu__help-text">
         <p className="placeholder-text">
-          select a city or start typing
+          {wheelPlaceholder}
         </p>
 
         <p className={classnames('search-text', { 'no-match': matchingResults.length === 0 })}>
@@ -864,7 +1004,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
         </button>
       </div>
 
-      <div className="wheel-menu__overlay" onClick={onClose} />
+      {/* <div className="wheel-menu__overlay" onClick={onClose} /> */}
     </Root>
   );
 };

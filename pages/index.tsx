@@ -20,7 +20,7 @@ import * as easing from '../utils/easing';
 import citiesData from '../data/cities.json';
 import WeatherForecast from '../components/WeatherForecast';
 import CityPicker from '../components/CityPicker.old';
-import WheelMenu from '../components/WheelMenu';
+import WheelMenu, { WheelMenuItem } from '../components/WheelMenu';
 import Tooltip from '../components/Tooltip';
 import CloudTooltip from '../components/CloudTooltip';
 import Icon from '../components/Icon';
@@ -28,24 +28,23 @@ import SocialLink from '../components/SocialLink';
 
 const markerInfoCache: any = {};
 
-const mapMarkers = citiesData.map((cityData, n) => ({
-  id: n.toString(),
-  label: cityData.city,
-  country: cityData.country,
-  lat: cityData.lat,
-  lon: cityData.lon,
-}));
-
 const citiesList = citiesData.sort((a, b) => a.city.localeCompare(b.city)).map((cityData, n) => ({
   value: n.toString(),
   index: n,
   label: cityData.city,
   data: {
     country: cityData.country,
-    countryCode: cityData.countryCode,
     lat: cityData.lat,
     lon: cityData.lon,
   },
+}));
+
+const mapMarkers = citiesList.map((cityData, n) => ({
+  id: cityData.value,
+  label: cityData.label,
+  country: cityData.data.country,
+  lat: cityData.data.lat,
+  lon: cityData.data.lon,
 }));
 
 // const mapMarkers = [
@@ -96,13 +95,16 @@ const Root = styled('div', {
   shouldForwardProp: (prop: PropertyKey) => !([
     'forecastViewActive',
     'cityPickerActive',
+    'highlightedMarkerId',
   ]).includes(prop.toString()),
 })<{
   forecastViewActive: boolean,
   cityPickerActive: boolean,
+  highlightedMarkerId?: string,
 }>(({
   forecastViewActive,
   cityPickerActive,
+  highlightedMarkerId,
 }) => css`
   /* =================================== */
   /* APP HEADER
@@ -213,9 +215,36 @@ const Root = styled('div', {
     margin-top: ${toRem(-20)};
   }
 
+  /* =================================== */
+  /* WORLD MAP
+  /* =================================== */
 
+  #world-map {
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    inset-inline-start: calc(50% + ${toRem(360)});
+    pointer-events: ${forecastViewActive ? 'none' : 'auto'};
+    
+    /* transform: translate(calc(-50% + ${toRem(cityPickerActive ? 50 : 0)}), -50%);
+    transition:
+      350ms opacity ${forecastViewActive ? 250 : (cityPickerActive ? 100 : 400)}ms,
+      1000ms transform ${easing.softSnap} ${cityPickerActive ? 0 : 400}ms; */
+    transform: translate(-50%, -50%);
+    
+    canvas {
+      opacity: ${forecastViewActive ? 0 : (cityPickerActive ? 0.5 : 1)};
+      transition: 350ms opacity ${forecastViewActive ? 250 : (cityPickerActive ? 100 : 400)}ms;
+    }
 
+    .map-marker {
+      pointer-events: ${cityPickerActive ? 'none' : ''};
+      opacity: ${cityPickerActive ? 0 : ''};
+      transition: 300ms opacity ${cityPickerActive ? 0 : 600}ms;
 
+      &[data-id="${highlightedMarkerId}"] { opacity: 1; pointer-events: auto; }
+    }
+  }
 
   /* #app-logo {
     position: absolute;
@@ -279,13 +308,17 @@ const Root = styled('div', {
  * HomePage Component
  */
 const HomePage: NextPage = (props) => {
-  // const isSSR = typeof window === 'undefined';
+  const isSSR = typeof window === 'undefined';
+  const defaultPlaceholder = <>Select a city <small>(or start typing...)</small></>;
+
   // const selectedCityRef = React.useRef<Marker | null>(null);
+  const [mapSize, setMapSize] = React.useState(isSSR ? 0 : window.innerWidth);
   const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
-  // const [mapSize, setMapSize] = React.useState(isSSR ? 0 : 0.85 * window.innerWidth);
+  const [wheelMenuPlaceholder, setWheelMenuPlaceholder] = React.useState<React.ReactNode>(defaultPlaceholder);
+  const [highlightedCity, setHighlightedCity] = React.useState<WheelMenuItem | null>(null);
   const [selectedCity, setSelectedCity] = React.useState<Marker | null>(null);
   // const [mapZoom, setMapZoom] = React.useState(0);
-  // const [mapTarget, setMapTarget] = React.useState<{lat: number, lon: number}>();
+  const [mapTarget, setMapTarget] = React.useState<WheelMenuItem | null>(null);
 
   // const closeForecastView = () => {
   //   setSelectedCity(null);
@@ -293,7 +326,7 @@ const HomePage: NextPage = (props) => {
 
   // React.useEffect(() => {
   //   const onWindowResize = () => {
-  //     setMapSize(0.85 * window.innerWidth);
+  //     setMapSize(window.innerWidth);
   //   };
     
   //   window.addEventListener('resize', onWindowResize);
@@ -308,6 +341,7 @@ const HomePage: NextPage = (props) => {
       <Root
         forecastViewActive={Boolean(selectedCity)}
         cityPickerActive={cityPickerOpen}
+        highlightedMarkerId={mapTarget?.index.toString()}
       >
         <header id="app-header">
           <Link href="/">
@@ -334,11 +368,99 @@ const HomePage: NextPage = (props) => {
         <WheelMenu
           id="city-selector"
           data={citiesList}
-          placeholder="Search for a city..."
+          triggerPlaceholder="Search for a city..."
+          wheelPlaceholder={wheelMenuPlaceholder}
           open={cityPickerOpen}
-          onOpen={() => setCityPickerOpen(true)}
-          onClose={() => setCityPickerOpen(false)}
-          // onSelect={() => setCityPickerOpen(false)}
+          onOpen={() => {
+            setCityPickerOpen(true);
+            setMapTarget(null);
+            setHighlightedCity(null);
+            setWheelMenuPlaceholder(defaultPlaceholder);
+          }}
+          onClose={() => {
+            setCityPickerOpen(false);
+          }}
+          onScroll={() => {
+            setMapTarget(null);
+            setHighlightedCity(null);
+            setWheelMenuPlaceholder(defaultPlaceholder);
+          }}
+          selectedItem={highlightedCity ? highlightedCity : undefined}
+          onSelect={(item) => {
+            const selectedItem = item as WheelMenuItem;
+            console.log(selectedItem)
+
+            if (selectedItem.value === highlightedCity?.value) {
+              alert('SELECT')
+            } else {
+              setMapTarget(selectedItem);
+              setHighlightedCity(selectedItem);
+              setWheelMenuPlaceholder(<>Click to view forecast data for <strong>{selectedItem.label}</strong></>);
+            }
+          }}
+          // onMouseStay={(item) => setHighlightedCity(item)}
+          // onMouseLeave={() => {
+          //   if (mapTarget) {
+          //     setHighlightedCity(mapTarget);
+          //   } else {
+          //     setHighlightedCity(null);
+          //   }
+          // }}
+        />
+
+        <WorldMap
+          id="world-map"
+          markers={mapMarkers}
+          canvasWidth={mapSize}
+          canvasHeight={mapSize}
+          zoom={cityPickerOpen ? -50 : -10}
+          interactive={!cityPickerOpen}
+          // autoOrbit={cityPickerOpen && !highlightedCity ? 'slow' : 'off'}
+          // showMarkers={!cityPickerOpen}
+          // showMarkers={selectedCity || cityPickerOpen ? false : true}
+          onMarkerClick={(marker) => {
+            console.log(marker)
+            // setSelectedCity(marker);
+            // selectedCityRef.current = marker;
+          }}
+          target={mapTarget ? { lat: mapTarget?.data.lat, lon: mapTarget?.data.lon } : undefined}
+          // zoom={mapZoom}
+          // canvasWidth={2000}
+          getMarkerInfo={
+            (markerData) => new Promise(async (resolve) => {
+              if (markerInfoCache[markerData.label]) {
+                const cached = markerInfoCache[markerData.label];
+
+                if (cached.expires > +new Date()) {
+                  return resolve(cached.response);
+                }
+              }
+
+              const { data } = await axios.get(`/api/weather/current?city=${markerData.label}`);
+              const iconResponse = await axios.get(`http://openweathermap.org/img/wn/${data.weather.icon}@2x.png`, { responseType: 'blob' });
+              const reader = new FileReader();
+              reader.readAsDataURL(iconResponse.data); 
+              reader.onload = () => {
+                const response = {
+                  content: (
+                    <MiniWeather
+                      weather={data.weather.main}
+                      icon={<img src={reader.result?.toString()} />}
+                      temp={data.temp}
+                    />
+                  ),
+                  count: data.weather.main.length * 3,
+                };
+
+                markerInfoCache[markerData.label] = {
+                  response,
+                  expires: +new Date() + 1 * 60 * 1000, // cache for 1 minute
+                };
+                
+                resolve(response);
+              };
+            })
+          }
         />
 
         <footer id="app-footer">
