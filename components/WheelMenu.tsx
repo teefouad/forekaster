@@ -239,7 +239,7 @@ const Root = styled('div', {
           font-weight: 600;
           letter-spacing: -0.005em;
           white-space: nowrap;
-          color: ${colors.MUTED};
+          color: #d0d0d0;
           transform-origin: top right;
           transition:
             240ms color ${easing.snapInOut},
@@ -431,7 +431,6 @@ const Root = styled('div', {
       top: 50%;
       inset-inline-start: ${toRem(wheelWidth! + wheelMenuOffset! + 100)};
       margin: 0;
-      pointer-events: none;
       user-select: none;
       opacity: ${open ? 1 : 0};
       color: ${selectedItem ? colors.TEXT : colors.MUTED};
@@ -463,7 +462,7 @@ const Root = styled('div', {
         ${selectedItem && css`
           border-inline-start: ${toRem(30)} solid rgba(0, 0, 0, 0.1);
           border-inline-end: 0 solid ${colors.TEXT};
-          animation: 120ms placeholder-dash-in linear both;
+          animation: 120ms placeholder-dash-in linear both 200ms;
 
           @keyframes placeholder-dash-in {
             to {
@@ -483,6 +482,8 @@ const Root = styled('div', {
         font-weight: 300;
         white-space: nowrap;
         padding: ${toRem(10)} ${toRem(13)};
+        min-width: ${toRem(39)};
+        min-height: ${toRem(39)};
         background: #fff;
         border-radius: ${toRem(8)};
         transform: translate(0, -50%);
@@ -491,6 +492,7 @@ const Root = styled('div', {
           opacity: ${!open || searchQuery ? 0 : 1};
           color: transparent;
           transition: 300ms opacity;
+          cursor: ${selectedItem ? 'pointer' : 'default'};
           animation: 300ms placeholder-${selectedItem ? 'selected' : 'default'}-fade-in linear forwards;
 
           @keyframes placeholder-default-fade-in {
@@ -508,12 +510,12 @@ const Root = styled('div', {
             inset-inline-start: 0;
             z-index: -1;
             display: block;
-            width: ${toRem(28)};
-            height: ${toRem(28)};
+            width: ${toRem(22)};
+            height: ${toRem(22)};
             background: #fff;
-            border-radius: ${toRem(8)} ${toRem(8)} ${toRem(8)} ${toRem(4)};
-            transform: scaleX(${selectedItem ? 0.8 : 0}) translateX(${toRem(2)}) translate(-50%, -50%) rotate(45deg);
-            transition: 200ms transform ${easing.snapInOut};
+            border-radius: ${toRem(0)} ${toRem(0)} ${toRem(0)} ${toRem(4)};
+            transform: translateX(${toRem(1)}) translate(-50%, -50%) scaleX(${selectedItem ? 0.8 : 0}) rotate(45deg);
+            transition: 300ms transform ${easing.snapInOut};
           }
           
           small {
@@ -530,6 +532,7 @@ const Root = styled('div', {
         &.search-text {
           display: flex;
           align-items: center;
+          pointer-events: none;
           color: ${colors.TEXT_DARK};
           opacity: ${matchesUI === 'out' || !open || !searchQuery ? 0 : 1};
           transition: 300ms opacity ${matchesUI === 'out' || !open || !searchQuery ? 0 : 300}ms;
@@ -538,7 +541,7 @@ const Root = styled('div', {
             content: '';
             display: ${searchQuery ? 'block' : 'none'};
             width: ${toRem(4)};
-            height: ${toRem(21)};
+            height: ${toRem(19)};
             margin-inline-start: ${toRem(2)};
             background: ${colors.TEXT};
             animation: 700ms blink infinite;
@@ -670,7 +673,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
   menuHeight = 40,
   wheelWidth = 440,
   wheelRadiusInVH = 136,
-  wheelMenuOffset = 70,
+  wheelMenuOffset = 100,
   degreesPerItem = 7,
   visibilitySpanInDegrees = 75,
   highlightTimeout = 1200,
@@ -686,6 +689,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
   const minScrollPosition = -0.25 * visibilitySpanInDegrees;
   const maxScrollPosition = (data.length - 1) * degreesPerItem - 0.25 * visibilitySpanInDegrees;
 
+  const rootRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
 
   // selected item
@@ -716,6 +720,8 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
   const selectItem = (item: WheelMenuItem) => {
     currentMatchRef.current = null;
+    setMatchingResults([]);
+    setSearchQuery('');
     scrollToItem(item);
     onSelect?.(item);
   };
@@ -732,6 +738,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
       timeout = setTimeout(() => {
         setDisablePointer(false);
         setSearchQuery('');
+        setMatchingResults([]);
       }, 1000);
     }
 
@@ -749,9 +756,12 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
     const onSearch = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        if (matchingResults.length) {
+        if (searchQuery && matchingResults.length) {
           selectItem(matchingResults[0]);
-          setSearchQuery('');
+          e.preventDefault();
+        } else
+        if (selectedItem) {
+          selectItem(selectedItem);
           e.preventDefault();
         }
       } else
@@ -768,10 +778,10 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     return () => {
       window.removeEventListener('keydown', onSearch);
     };
-  }, [open, onSelect, matchingResults]);
+  }, [open, onSelect, searchQuery, matchingResults]);
 
   React.useEffect(() => {
-    if (!open || !searchQuery || searchQuery.length < 2) return;
+    if (!open || !searchQuery) return;
 
     const matches = data.filter((item) => item.label.toLowerCase().startsWith(searchQuery.toLowerCase()));
 
@@ -779,7 +789,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
 
     setMatchesUI('in');
 
-    if (matches.length) {
+    if (matches.length && searchQuery.length >= 2) {
       if (currentMatchRef.current?.value !== matches[0].value) {
         const targetScrollPosition = Math.max(minScrollPosition, Math.min(maxScrollPosition, matches[0].index * degreesPerItem - 0.25 * visibilitySpanInDegrees));
   
@@ -815,6 +825,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     selectedItem,
     degreesPerItem,
     visibilitySpanInDegrees,
+    minScrollPosition,
     maxScrollPosition,
   ]);
   
@@ -881,12 +892,30 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
     visibilitySpanInDegrees,
     visibleItems,
     setVisibleItems,
+    minScrollPosition,
     maxScrollPosition,
     onScroll,
   ]);
+
+  // handle click
+  React.useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as HTMLElement)) {
+        onClose?.();
+      }
+    };
+
+    window.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('click', handleClick);
+    };
+  }, [onClose]);
+  
   
   return (
     <Root
+      ref={rootRef}
       {...props}
       open={open}
       menuWidth={menuWidth}
@@ -989,7 +1018,7 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
       </div>
 
       <div className="wheel-menu__help-text">
-        <p className="placeholder-text">
+        <p className="placeholder-text" onClick={() => selectedItem && onSelect?.(selectedItem)}>
           {wheelPlaceholder}
         </p>
 
@@ -1003,8 +1032,6 @@ const WheelMenu: React.FC<WheelMenuCombinedProps> = ({
           Close
         </button>
       </div>
-
-      {/* <div className="wheel-menu__overlay" onClick={onClose} /> */}
     </Root>
   );
 };

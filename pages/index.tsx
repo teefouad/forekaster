@@ -242,7 +242,10 @@ const Root = styled('div', {
       opacity: ${cityPickerActive ? 0 : ''};
       transition: 300ms opacity ${cityPickerActive ? 0 : 600}ms;
 
-      &[data-id="${highlightedMarkerId}"] { opacity: 1; pointer-events: auto; }
+      &[data-id="${highlightedMarkerId}"] {
+        opacity: 1;
+        pointer-events: auto;
+      }
     }
   }
 
@@ -341,7 +344,7 @@ const HomePage: NextPage = (props) => {
       <Root
         forecastViewActive={Boolean(selectedCity)}
         cityPickerActive={cityPickerOpen}
-        highlightedMarkerId={mapTarget?.index.toString()}
+        highlightedMarkerId={cityPickerOpen ? mapTarget?.index.toString() : '-1'}
       >
         <header id="app-header">
           <Link href="/">
@@ -391,7 +394,7 @@ const HomePage: NextPage = (props) => {
             console.log(selectedItem)
 
             if (selectedItem.value === highlightedCity?.value) {
-              alert('SELECT')
+              alert(selectedItem.label)
             } else {
               setMapTarget(selectedItem);
               setHighlightedCity(selectedItem);
