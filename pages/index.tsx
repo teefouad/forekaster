@@ -112,11 +112,11 @@ const Root = styled('div', {
 
   #app-header {
     position: absolute;
-    top: calc(50% - 30vh);
+    top: ${forecastViewActive ? toRem(50) : 'calc(50% - 30vh)'};
     inset-inline-start: ${toRem(50)};
     transition:
       300ms opacity linear 300ms,
-      550ms transform ${easing.snapInOut} 500ms;
+      550ms top ${easing.snapInOut} ${forecastViewActive ? 0 : 150}ms;
 
     ${cityPickerActive && css`
       opacity: 0.025;
@@ -125,19 +125,30 @@ const Root = styled('div', {
   }
 
   #app-logo {
+    display: block;
     font-size: ${toRem(48)};
     font-weight: 600;
     text-decoration: none;
     outline: none;
     color: ${colors.TEXT_DARK};
+    transform-origin: top left;
+    transform: scale(${forecastViewActive ? 0.5 : 1});
+    transition: 550ms transform ${easing.snapInOut} ${forecastViewActive ? 120 : 0}ms;
   }
 
   #app-description {
+    display: block;
     margin: ${toRem(10)} 0 0;
     max-width: ${toRem(200)};
     font-size: ${toRem(15)};
     font-weight: 300;
+    pointer-events: ${forecastViewActive ? 'none' : 'auto'};
+    opacity: ${forecastViewActive ? 0 : 1};
     color: ${colors.TEXT_LIGHT};
+    transform: translateY(${toRem(forecastViewActive ? 30 : 0)});
+    transition:
+      250ms opacity 200ms,
+      550ms transform ${easing.snapInOut} ${forecastViewActive ? 0 : 150}ms;
   }
 
   /* =================================== */
@@ -152,11 +163,23 @@ const Root = styled('div', {
     align-items: center;
     transition:
       300ms opacity linear 300ms,
-      550ms transform ${easing.snapInOut} 500ms;
+      550ms transform ${easing.snapInOut} 200ms;
 
     ${cityPickerActive && css`
       opacity: 0.025;
       transition-delay: 0ms;
+    `}
+
+    ${forecastViewActive && css`
+      opacity: 0;
+      transform: translateY(${toRem(50)});
+      transition:
+        300ms opacity linear,
+        550ms transform ${easing.snapInOut};
+
+      > * {
+        pointer-events: none;
+      }
     `}
 
     > div {
@@ -213,6 +236,22 @@ const Root = styled('div', {
     inset-inline-start: ${toRem(50)};
     z-index: 9999;
     margin-top: ${toRem(-20)};
+    transition:
+      300ms opacity linear 300ms,
+      550ms transform ${easing.snapInOut} 150ms;
+
+    ${forecastViewActive && css`
+      opacity: 0;
+      transform: translateX(${toRem(-100)});
+      transition:
+        200ms opacity linear,
+        550ms transform ${easing.snapInOut};
+
+      * {
+        pointer-events: none;
+        user-select: none;
+      }
+    `};
   }
 
   /* =================================== */
@@ -224,12 +263,6 @@ const Root = styled('div', {
     position: absolute;
     top: 50%;
     inset-inline-start: calc(50% + ${toRem(360)});
-    pointer-events: ${forecastViewActive ? 'none' : 'auto'};
-    
-    /* transform: translate(calc(-50% + ${toRem(cityPickerActive ? 50 : 0)}), -50%);
-    transition:
-      350ms opacity ${forecastViewActive ? 250 : (cityPickerActive ? 100 : 400)}ms,
-      1000ms transform ${easing.softSnap} ${cityPickerActive ? 0 : 400}ms; */
     transform: translate(-50%, -50%);
     
     canvas {
@@ -237,8 +270,13 @@ const Root = styled('div', {
       transition: 350ms opacity ${forecastViewActive ? 250 : (cityPickerActive ? 100 : 400)}ms;
     }
 
+    .markers-container {
+      opacity: ${forecastViewActive ? 0 : 1};
+      transition: 350ms opacity ${forecastViewActive ? 250 : 400}ms;
+    }
+
     .map-marker {
-      pointer-events: ${cityPickerActive ? 'none' : ''};
+      pointer-events: ${forecastViewActive || cityPickerActive ? 'none' : ''};
       opacity: ${cityPickerActive ? 0 : ''};
       transition: 300ms opacity ${cityPickerActive ? 0 : 600}ms;
 
@@ -319,7 +357,7 @@ const HomePage: NextPage = (props) => {
   const [cityPickerOpen, setCityPickerOpen] = React.useState(false);
   const [wheelMenuPlaceholder, setWheelMenuPlaceholder] = React.useState<React.ReactNode>(defaultPlaceholder);
   const [highlightedCity, setHighlightedCity] = React.useState<WheelMenuItem | null>(null);
-  const [selectedCity, setSelectedCity] = React.useState<Marker | null>(null);
+  const [selectedCity, setSelectedCity] = React.useState<WheelMenuItem | null>(null);
   // const [mapZoom, setMapZoom] = React.useState(0);
   const [mapTarget, setMapTarget] = React.useState<WheelMenuItem | null>(null);
 
@@ -339,6 +377,18 @@ const HomePage: NextPage = (props) => {
   //   };
   // }, []);
 
+  const selectCity = (city: WheelMenuItem) => {
+    if (cityPickerOpen) {
+      setCityPickerOpen(false);
+      
+      setTimeout(() => {
+        setSelectedCity(city);
+      }, 600);
+    } else {
+      setSelectedCity(city);
+    }
+  }
+
   return (
     <Layout {...props} >
       <Root
@@ -348,7 +398,7 @@ const HomePage: NextPage = (props) => {
       >
         <header id="app-header">
           <Link href="/">
-            <a id="app-logo">
+            <a id="app-logo" onClick={() => setSelectedCity(null)}>
               <Tooltip
                 label="Go to Homepage"
                 position="center-end"
@@ -391,14 +441,13 @@ const HomePage: NextPage = (props) => {
           selectedItem={highlightedCity ? highlightedCity : undefined}
           onSelect={(item) => {
             const selectedItem = item as WheelMenuItem;
-            console.log(selectedItem)
 
             if (selectedItem.value === highlightedCity?.value) {
-              alert(selectedItem.label)
+              selectCity(selectedItem);
             } else {
               setMapTarget(selectedItem);
               setHighlightedCity(selectedItem);
-              setWheelMenuPlaceholder(<>Click to view forecast data for <strong>{selectedItem.label}</strong></>);
+              setWheelMenuPlaceholder(<>View weather forecast for <strong>{selectedItem.label}</strong></>);
             }
           }}
           // onMouseStay={(item) => setHighlightedCity(item)}
@@ -417,13 +466,15 @@ const HomePage: NextPage = (props) => {
           canvasWidth={mapSize}
           canvasHeight={mapSize}
           zoom={cityPickerOpen ? -50 : -10}
-          interactive={!cityPickerOpen}
+          interactive={!cityPickerOpen && !selectedCity}
           // autoOrbit={cityPickerOpen && !highlightedCity ? 'slow' : 'off'}
           // showMarkers={!cityPickerOpen}
           // showMarkers={selectedCity || cityPickerOpen ? false : true}
           onMarkerClick={(marker) => {
-            console.log(marker)
-            // setSelectedCity(marker);
+            const cityMarker = citiesList.find(city => city.value === marker.id);
+            if (cityMarker) {
+              selectCity(cityMarker);
+            }
             // selectedCityRef.current = marker;
           }}
           target={mapTarget ? { lat: mapTarget?.data.lat, lon: mapTarget?.data.lon } : undefined}
@@ -515,11 +566,11 @@ const HomePage: NextPage = (props) => {
           </div>
         </header> */}
 
-        {
+        {/* {
           selectedCity && (
             <WeatherForecast city={selectedCity?.label} />
           )
-        }
+        } */}
         
         
         {/* <WorldMap

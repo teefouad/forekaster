@@ -493,7 +493,14 @@ const Root = styled('div', {
           color: transparent;
           transition: 300ms opacity;
           cursor: ${selectedItem ? 'pointer' : 'default'};
+          transition: 240ms transform ${easing.easyBack};
           animation: 300ms placeholder-${selectedItem ? 'selected' : 'default'}-fade-in linear forwards;
+
+          ${selectedItem && css`
+            &:hover {
+              transform: translate(0, -50%) scale(1.035);
+            }
+          `};
 
           @keyframes placeholder-default-fade-in {
             to { color: ${colors.MUTED}; }
